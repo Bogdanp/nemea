@@ -14,7 +14,7 @@ manager.
 
 ### First-time setup
 
-    $ raco install nemea/
+    $ raco pkg install nemea/
     $ npm install
     $ pip install honcho
     $ cp .env.default .env.dev
