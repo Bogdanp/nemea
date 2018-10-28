@@ -50,7 +50,7 @@
                  [(vector level message _ _)
                   (fprintf (current-error-port)
                            "[~a] [~a] ~a\n"
-                           (~t (now/utc) "yyyy-MM-dd HH:mm:ss")
+                           (~t (now) "yyyy-MM-dd HH:mm:ss")
                            (~a level #:align 'right #:width 7)
                            message)
                   (loop)])))))
