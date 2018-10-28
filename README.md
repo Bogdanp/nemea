@@ -2,6 +2,7 @@
 
 Take control of your website analytics!
 
+
 ## Developing
 
 ### Requirements
@@ -26,3 +27,8 @@ manager.
 [Racket]: https://racket-lang.org
 [Python]: https://python.org
 [Node.js]: https://nodejs.org
+
+
+## License
+
+    dramatiq is licensed under the GPL. Please see COPYING for details.
