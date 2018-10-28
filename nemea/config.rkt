@@ -21,6 +21,6 @@
 (define db-max-idle-connections (string->number (or (getenv "NEMEA_DB_MAX_IDLE_CONNECTIONS") "1")))
 
 (define batcher-channel-size (string->number (or (getenv "NEMEA_BATCHER_CHANNEL_SIZE") "1000000")))
-(define batcher-timeout (string->number (or (getenv "NEMEA_BATCHER_TIMEOUT") "60")))
+(define batcher-timeout (string->number (or (getenv "NEMEA_BATCHER_TIMEOUT") "30")))
 
 (define log-level (string->symbol (or (getenv "NEMEA_LOG_LEVEL") "info")))
