@@ -1,7 +1,12 @@
 import Vue from "vue";
-import App from "./App.vue";
+import VueRouter from "vue-router";
 
-new Vue({
-  el: "#app",
-  render: h => h(App)
-});
+Vue.use(VueRouter);
+
+import Dashboard from "./pages/Dashboard.vue";
+
+const routes = [{ path: "/", component: Dashboard }];
+const router = new VueRouter({ routes });
+const app = new Vue({ router });
+
+app.$mount("#app");
