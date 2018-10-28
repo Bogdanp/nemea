@@ -19,12 +19,12 @@
   (and~> (assq k xs) (cdr)))
 
 (define STATUS-LINES-BY-CODE
-  #hasheq((200 . #"OK")
-          (201 . #"Created")
-          (202 . #"Accepted")
-          (400 . #"Bad Request")
-          (404 . #"Not Found")
-          (500 . #"Internal Server Error")))
+  (hasheq 200 #"OK"
+          201 #"Created"
+          202 #"Accepted"
+          400 #"Bad Request"
+          404 #"Not Found"
+          500 #"Internal Server Error"))
 
 (define (code->status-line code)
   (hash-ref STATUS-LINES-BY-CODE code))
@@ -46,7 +46,7 @@
 
   (check-equal?
    (request/json (make-request #:content "{\"x\": 42}"))
-   #hasheq((x . 42))))
+   (hasheq 'x 42)))
 
 
 (define/contract (response/json #:body [body (hasheq)]

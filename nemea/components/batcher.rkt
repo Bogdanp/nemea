@@ -53,7 +53,7 @@
   (async-channel-put (batcher-events batcher) (list (->date (now/utc)) page-visit)))
 
 (define ((make-listener batcher))
-  (let loop ([batch #hash()])
+  (let loop ([batch (hash)])
     (match (async-channel-get (batcher-events batcher))
       ['stop
        (log-batcher-debug "received 'stop")
@@ -63,7 +63,7 @@
       ['timeout
        (log-batcher-debug "received 'timeout")
        (upsert-batch! batcher batch)
-       (loop #hash())]
+       (loop (hash))]
 
       [(list d pv)
        (define k (make-grouping d pv))

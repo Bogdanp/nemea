@@ -51,4 +51,4 @@
 
 (define (not-found req)
   (response/json #:code 404
-                 #:body #hasheq((error . "not found"))))
+                 #:body (hasheq 'error "not found")))
