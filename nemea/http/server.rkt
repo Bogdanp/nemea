@@ -23,7 +23,7 @@
   #:methods gen:component
   [(define (component-start a-server)
      (define options (server-options a-server))
-     (define stopper (serve #:dispatch (dispatch/servlet (app-start (server-app a-server)))
+     (define stopper (serve #:dispatch (app-dispatcher (server-app a-server))
                             #:listen-ip (server-opts-listen-ip options)
                             #:port (server-opts-port options)))
 
