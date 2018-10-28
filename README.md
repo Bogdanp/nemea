@@ -35,7 +35,7 @@ Set up the databases:
 
 ### Running the development server
 
-    $ honcho -e .env.dev -p 8000 -f Procfile.dev
+    $ honcho -e .env.dev -f Procfile.dev
 
 ### Running the tests
 
