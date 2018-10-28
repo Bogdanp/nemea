@@ -3,6 +3,7 @@
 (require db
          gregor
          racket/contract
+         sql
          "database.rkt"
          "system.rkt"
          "utils.rkt")
@@ -20,23 +21,13 @@
 (define (make-reporter database)
   (reporter database))
 
-(define DAILY-REPORT-QUERY
-  #<<SQL
-select
-  date, path, referrer_host, visits
-from
-  page_visits
-where
-  date >= $1 and
-  date < $2
-order by date, path
-SQL
-)
-
 (define (make-daily-report reporter start-date end-date)
   (define conn (database-connection (reporter-database reporter)))
   (for/list ([(d path referrer-host visits)
-              (in-query conn DAILY-REPORT-QUERY (date->sql-date start-date) (date->sql-date end-date))])
+              (in-query conn (select date path referrer_host visits
+                                     #:from page_visits
+                                     #:where (and (>= date ,(date->sql-date start-date))
+                                                  (< date ,(date->sql-date end-date)))))])
 
     (hasheq 'date (sql-date->date d)
             'path path
