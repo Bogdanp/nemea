@@ -8,7 +8,7 @@
 (define hostname (or (getenv "NEMEA_HOSTNAME") "127.0.0.1"))
 
 (define listen-ip (or (getenv "NEMEA_LISTEN_IP") "127.0.0.1"))
-(define port (string->number (or (getenv "NEMEA_PORT") "8000")))
+(define port (string->number (or (getenv "PORT") "8000")))
 
 (define db-url (string->url (or (getenv "DATABASE_URL") "postgres://nemea:nemea@127.0.0.1/nemea")))
 (define db-username (car (string-split (url-user db-url) ":")))

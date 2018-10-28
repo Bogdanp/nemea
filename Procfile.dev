@@ -1,0 +1,2 @@
+web: racket -l nemea
+assets: npx parcel watch -d static assets/index.html

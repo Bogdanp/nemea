@@ -31,6 +31,8 @@
                                  #:port config:port)))))
 
 (module+ main
+  (file-stream-buffer-mode (current-error-port) 'line)
+
   (define log-receiver
     (make-log-receiver
      (current-logger)
@@ -46,10 +48,11 @@
              (let loop ()
                (match (sync log-receiver)
                  [(vector level message _ _)
-                  (printf "[~a] [~a] ~a\n"
-                          (~t (now/utc) "yyyy-MM-dd HH:mm:ss")
-                          (~a level #:align 'right #:width 7)
-                          message)
+                  (fprintf (current-error-port)
+                           "[~a] [~a] ~a\n"
+                           (~t (now/utc) "yyyy-MM-dd HH:mm:ss")
+                           (~a level #:align 'right #:width 7)
+                           message)
                   (loop)])))))
 
   (system-start prod-system)
