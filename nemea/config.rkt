@@ -5,7 +5,8 @@
 
 (provide (all-defined-out))
 
-(define host (or (getenv "NEMEA_HOST") "127.0.0.1"))
+(define hostname (or (getenv "NEMEA_HOSTNAME") "127.0.0.1"))
+
 (define listen-ip (or (getenv "NEMEA_LISTEN_IP") "127.0.0.1"))
 (define port (string->number (or (getenv "NEMEA_PORT") "8000")))
 

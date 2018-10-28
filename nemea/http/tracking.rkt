@@ -12,10 +12,25 @@
 
 ;; This is on the "hot path" so it has no contract.
 (define ((track-page-visit batcher) req)
-  (enqueue batcher (~> (request-uri req)
-                       (url-query)
-                       (query->page-visit)))
+  (unless (do-not-track? req)
+    (enqueue batcher (~> (request-uri req)
+                         (url-query)
+                         (query->page-visit))))
   (response/pixel))
+
+
+(define (do-not-track? req)
+  (and~> (headers-assq* #"DNT" (request-headers/raw req))
+         (header-value)
+         (bytes=? #"1")))
+
+(module+ test
+  (require rackunit
+           "utils-test.rkt")
+
+  (check-false (do-not-track? (make-request)))
+  (check-false (do-not-track? (make-request #:headers (list (make-header #"DNT" #"0")))))
+  (check-true (do-not-track? (make-request #:headers (list (make-header #"DNT" #"1"))))))
 
 
 (define (query->page-visit query)
