@@ -50,4 +50,5 @@
              handle-custom-exns)))))
 
 (define (not-found req)
-  (response/json #:body #hasheq((error . "not found"))))
+  (response/json #:code 404
+                 #:body #hasheq((error . "not found"))))
