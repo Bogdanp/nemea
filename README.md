@@ -9,7 +9,7 @@ Take control of your website analytics!
 
 nemea is a [Racket] application so you'll need to install that and
 you'll need [Node.js] version `10.6.0` to build the static assets.
-Optionall, you'll need [Python] for the development process manager
+Optionally, you'll need [Python] for the development process manager
 (honcho).
 
 You'll also need a running [PostgreSQL] instance.
