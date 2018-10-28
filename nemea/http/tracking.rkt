@@ -10,11 +10,13 @@
 
 (provide track-page-visit)
 
+;; This is on the "hot path" so it has no contract.
 (define ((track-page-visit batcher) req)
   (enqueue batcher (~> (request-uri req)
                        (url-query)
                        (query->page-visit)))
   (response/pixel))
+
 
 (define (query->page-visit query)
   (with-handlers ([exn:fail? (lambda (e)

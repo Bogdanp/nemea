@@ -7,6 +7,7 @@
          "components/batcher.rkt"
          "components/database.rkt"
          "components/migrations.rkt"
+         "components/reporter.rkt"
          "components/system.rkt"
          (prefix-in config: "config.rkt")
          "http/app.rkt"
@@ -14,7 +15,7 @@
 
 (define prod-system
   (make-system
-   `((app [batcher database] ,make-app)
+   `((app [database batcher reporter] ,make-app)
      (batcher [database] ,(make-batcher #:channel-size config:batcher-channel-size
                                         #:timeout config:batcher-timeout))
      (database ,(make-database #:server config:db-host
@@ -25,6 +26,7 @@
                                #:max-connections config:db-max-connections
                                #:max-idle-connections config:db-max-idle-connections))
      (migrations [database] ,make-migrations)
+     (reporter [database] ,make-reporter)
      (server [app] ,(make-server #:listen-ip config:listen-ip
                                  #:port config:port)))))
 

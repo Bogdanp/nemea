@@ -9,7 +9,8 @@
          threading
          "database.rkt"
          "page-visits.rkt"
-         "system.rkt")
+         "system.rkt"
+         "utils.rkt")
 
 (provide (contract-out
           (struct batcher ((database database?)
@@ -88,7 +89,7 @@
 
 (define (upsert-visits! conn grouping visits)
   (query-exec conn UPSERT-BATCH-QUERY
-              (->sql-date (grouping-date grouping))
+              (date->sql-date (grouping-date grouping))
               (grouping-path grouping)
               (or (grouping-referrer-host grouping) "")
               (or (grouping-referrer-path grouping) "")
@@ -124,9 +125,6 @@ SQL
             (and~> (page-visit-client-referrer pv) (url-host))
             (and~> (page-visit-client-referrer pv) (url->path-string))
             "" "" ""))
-
-(define (->sql-date d)
-  (sql-date (->year d) (->month d) (->day d)))
 
 (define (url->path-string url)
   (path->string (url->path url)))

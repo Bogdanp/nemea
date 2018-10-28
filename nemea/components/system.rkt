@@ -50,7 +50,7 @@
 
   (define references
     (let collect ([definitions (hash->list definitions)]
-                  [references (make-immutable-hasheq)])
+                  [references (hasheq)])
       (match definitions
         [(? empty?) references]
         [(cons (cons id (list dep-ids _)) definitions)

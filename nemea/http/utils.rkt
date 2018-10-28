@@ -11,6 +11,7 @@
 (provide assq*
 
          request/json
+         response/bad-request
          response/json
          response/pixel)
 
@@ -48,7 +49,7 @@
    #hasheq((x . 42))))
 
 
-(define/contract (response/json #:body [body (make-immutable-hash)]
+(define/contract (response/json #:body [body (hasheq)]
                                 #:code [code 200]
                                 #:headers [headers '()])
   (->* ()
@@ -61,6 +62,12 @@
    code (code->status-line code)
    (current-seconds) #"application/json; charset=utf-8"
    headers (list (jsexpr->bytes body))))
+
+(define/contract (response/bad-request message)
+  (-> string? response?)
+  (response/json #:code 400
+                 #:body (hasheq 'error message)))
+
 
 (module+ test
   (require rackunit)
