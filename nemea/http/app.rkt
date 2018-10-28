@@ -35,7 +35,8 @@
 (define (make-app database batcher reporter)
   (define file-server
     (files:make
-     #:url->path (make-url->path static-path)))
+     #:url->path (make-url->path static-path)
+     #:path->mime-type path->mime-type))
 
   (define-values (dispatch _)
     (dispatch-rules

@@ -4,7 +4,10 @@
          racket/contract
          racket/format
          racket/function
+         racket/list
+         racket/match
          racket/port
+         racket/string
          threading
          web-server/http)
 
@@ -13,7 +16,9 @@
          request/json
          response/bad-request
          response/json
-         response/pixel)
+         response/pixel
+
+         path->mime-type)
 
 (define (assq* k xs)
   (and~> (assq k xs) (cdr)))
@@ -84,3 +89,22 @@
 (define PIXEL-BYTES #"GIF89a\1\0\1\0\0\377\0,\0\0\0\0\1\0\1\0\0\2\0;")
 (define (response/pixel)
   (response/full 200 #"OK" (current-seconds) GIF-MIME-TYPE '() (list PIXEL-BYTES)))
+
+
+(define MIME-TYPES (hash "css" #"text/css"
+                         "html" #"text/html"
+                         "js" #"application/javascript"
+                         "woff" #"font/woff"
+                         "woff2" #"font/woff2"))
+(define (path->mime-type p)
+  (define filename (path-element->string (last (explode-path p))))
+  (match (string-split filename ".")
+    [(list _ ... ext) (hash-ref MIME-TYPES ext #f)]
+    [else #f]))
+
+(module+ test
+  (require rackunit)
+
+  (check-equal? (path->mime-type (string->path "foo/bar.html")) #"text/html")
+  (check-equal? (path->mime-type (string->path "test.js")) #"application/javascript")
+  (check-equal? (path->mime-type (string->path "test.min.css")) #"text/css"))
