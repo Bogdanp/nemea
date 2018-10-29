@@ -7,6 +7,27 @@
 }
 
 body {
+  background: #54aee4;
+  color: #fff;
   font: 62.5%/1.4 "Monterrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-kerning: normal;
   font-size: 1rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  cursor: default;
+  font-weight: 300;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+}
+
+.container {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    margin: 0 auto;
+    width: 960px;
+  }
 }
