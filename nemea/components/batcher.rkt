@@ -92,6 +92,7 @@
 (define (upsert-visits! conn grouping visits)
   (query-exec conn UPSERT-BATCH-QUERY
               (date->sql-date (grouping-date grouping))
+              (grouping-host grouping)
               (grouping-path grouping)
               (or (grouping-referrer-host grouping) "")
               (or (grouping-referrer-path grouping) "")
@@ -102,27 +103,29 @@
 
 (define UPSERT-BATCH-QUERY
   #<<SQL
-insert into page_visits(date, path, referrer_host, referrer_path, country, os, browser, visits)
-  values($1, $2, $3, $4, $5, $6, $7, $8)
-on conflict(date, path, referrer_host, referrer_path, country, os, browser)
+insert into page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits)
+  values($1, $2, $3, $4, $5, $6, $7, $8, $9)
+on conflict(date, host, path, referrer_host, referrer_path, country, os, browser)
 do update
-  set visits = page_visits.visits + $8
+  set visits = page_visits.visits + $9
   where
     page_visits.date = $1 and
-    page_visits.path = $2 and
-    page_visits.referrer_host = $3 and
-    page_visits.referrer_path = $4 and
-    page_visits.country = $5 and
-    page_visits.os = $6 and
-    page_visits.browser = $7
+    page_visits.host = $2 and
+    page_visits.path = $3 and
+    page_visits.referrer_host = $4 and
+    page_visits.referrer_path = $5 and
+    page_visits.country = $6 and
+    page_visits.os = $7 and
+    page_visits.browser = $8
 SQL
 )
 
-(struct grouping (date path referrer-host referrer-path country os browser)
+(struct grouping (date host path referrer-host referrer-path country os browser)
   #:transparent)
 
 (define (make-grouping d pv)
   (grouping d
+            (url-host (page-visit-location pv))
             (url->path-string (page-visit-location pv))
             (and~> (page-visit-client-referrer pv) (url-host))
             (and~> (page-visit-client-referrer pv) (url->path-string))

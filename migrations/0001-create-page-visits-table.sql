@@ -1,5 +1,6 @@
 create table page_visits (
   date date not null,
+  host text not null,
   path text not null,
   referrer_host text not null,
   referrer_path text not null,
@@ -9,5 +10,5 @@ create table page_visits (
 
   visits bigint not null,
 
-  unique(date, path, referrer_host, referrer_path, country, os, browser)
+  unique(date, host, path, referrer_host, referrer_path, country, os, browser)
 );
