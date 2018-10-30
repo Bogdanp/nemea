@@ -29,7 +29,7 @@
                                      #:where (and (>= date ,(date->sql-date start-date))
                                                   (< date ,(date->sql-date end-date)))))])
 
-    (hasheq 'date (sql-date->date d)
+    (hasheq 'date (sql-date->moment d)
             'path path
             'referrer-host referrer-host
             'visits visits)))
@@ -37,6 +37,7 @@
 (module+ test
   (require rackunit
            rackunit/text-ui
+           (prefix-in config: "../config.rkt")
            "migrations.rkt")
 
   (define test-system
@@ -79,10 +80,10 @@ SQL
         (system-get test-system 'reporter)
         (date 2018 8 20)
         (date 2018 8 24))
-       (list (hasheq 'date (date 2018 8 20) 'path "/" 'referrer-host "" 'visits 10)
-             (hasheq 'date (date 2018 8 20) 'path "/a" 'referrer-host "" 'visits 1)
-             (hasheq 'date (date 2018 8 20) 'path "/b" 'referrer-host "" 'visits 2)
-             (hasheq 'date (date 2018 8 21) 'path "/a" 'referrer-host "" 'visits 3)
-             (hasheq 'date (date 2018 8 21) 'path "/b" 'referrer-host "" 'visits 5)
-             (hasheq 'date (date 2018 8 23) 'path "/a" 'referrer-host "" 'visits 1)
-             (hasheq 'date (date 2018 8 23) 'path "/b" 'referrer-host "" 'visits 2)))))))
+       (list (hasheq 'date (moment 2018 8 20 #:tz config:timezone) 'path "/" 'referrer-host "" 'visits 10)
+             (hasheq 'date (moment 2018 8 20 #:tz config:timezone) 'path "/a" 'referrer-host "" 'visits 1)
+             (hasheq 'date (moment 2018 8 20 #:tz config:timezone) 'path "/b" 'referrer-host "" 'visits 2)
+             (hasheq 'date (moment 2018 8 21 #:tz config:timezone) 'path "/a" 'referrer-host "" 'visits 3)
+             (hasheq 'date (moment 2018 8 21 #:tz config:timezone) 'path "/b" 'referrer-host "" 'visits 5)
+             (hasheq 'date (moment 2018 8 23 #:tz config:timezone) 'path "/a" 'referrer-host "" 'visits 1)
+             (hasheq 'date (moment 2018 8 23 #:tz config:timezone) 'path "/b" 'referrer-host "" 'visits 2)))))))

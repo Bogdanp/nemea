@@ -7,6 +7,7 @@
          racket/contract
          racket/match
          threading
+         (prefix-in config: "../config.rkt")
          "database.rkt"
          "page-visits.rkt"
          "system.rkt"
@@ -50,7 +51,8 @@
   (async-channel-put (batcher-events batcher) event))
 
 (define (enqueue batcher page-visit)
-  (async-channel-put (batcher-events batcher) (list (->date (now/utc)) page-visit)))
+  (define date (today #:tz config:timezone))
+  (async-channel-put (batcher-events batcher) (list date page-visit)))
 
 (define ((make-listener batcher))
   (let loop ([batch (hash)])
