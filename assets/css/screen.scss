@@ -7,8 +7,8 @@
 }
 
 body {
-  background: #54aee4;
-  color: #fff;
+  background: #fff;
+  color: #131823;
   font: 62.5%/1.4 "Monterrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-kerning: normal;
   font-size: 1rem;
@@ -23,6 +23,40 @@ h1, h2, h3, h4, h5, h6 {
 
 .container {
   width: 100%;
+}
+
+.nav {
+  background: #fff;
+  box-shadow: 0 5px 15px #f7f8fb;
+
+  &__items {
+    list-style-type: none;
+    padding: 0 1rem;
+  }
+
+  &__item {
+    display: inline-block;
+
+    a {
+      display: inline-block;
+      padding: 1rem 0.5rem;
+      color: #bdc5d4;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.5s ease-in-out;
+    }
+
+    &:hover a,
+    &--active a {
+      color: #131823;
+    }
+  }
+}
+
+.page {
+  padding: 1rem 0;
 }
 
 @media (min-width: 1024px) {

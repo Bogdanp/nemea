@@ -13,7 +13,13 @@
 
 <style lang="scss">
   .totals-box {
-    padding: 1rem;
+    padding: 1rem 1.5rem;
+    background: #4648ff;
+    border-bottom: 1px solid #ffffff10;
+    border-right: 1px solid #ffffff10;
+    border-radius: 8px;
+    box-shadow: 0 0 30px #4648ff54;
+    color: #fff;
     font-size: 1.4rem;
     opacity: 0.5;
     transition: opacity 0.5s ease-in-out;
@@ -30,12 +36,6 @@
     &__value {
       font-weight: 600;
       text-transform: lowercase;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .totals-box {
-      padding: 1rem 0;
     }
   }
 </style>
