@@ -1,3 +1,4 @@
+@import "./_colors.scss";
 @import "./_fonts.scss";
 
 * {
@@ -7,8 +8,8 @@
 }
 
 body {
-  background: #fff;
-  color: #131823;
+  background: $background;
+  color: $text;
   font: 62.5%/1.4 "Monterrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-kerning: normal;
   font-size: 1rem;
@@ -26,8 +27,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav {
-  background: #fff;
-  box-shadow: 0 5px 15px #f7f8fb;
+  background: $background;
+  box-shadow: 0 5px 15px $shadow;
 
   &__items {
     list-style-type: none;
@@ -40,9 +41,10 @@ h1, h2, h3, h4, h5, h6 {
     a {
       display: inline-block;
       padding: 1rem 0.5rem;
-      color: #bdc5d4;
+      color: $text-faded;
       font-size: 0.8rem;
-      font-weight: 600;
+      font-weight: 400;
+      letter-spacing: 1px;
       text-decoration: none;
       text-transform: uppercase;
       transition: color 0.5s ease-in-out;
@@ -50,7 +52,7 @@ h1, h2, h3, h4, h5, h6 {
 
     &:hover a,
     &--active a {
-      color: #131823;
+      color: $text;
     }
   }
 }

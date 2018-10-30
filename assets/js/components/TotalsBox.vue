@@ -12,14 +12,14 @@
 </script>
 
 <style lang="scss">
+  @import "../../css/_colors.scss";
+
   .totals-box {
     padding: 1rem 1.5rem;
-    background: #4648ff;
-    border-bottom: 1px solid #ffffff10;
-    border-right: 1px solid #ffffff10;
-    border-radius: 8px;
-    box-shadow: 0 0 30px #4648ff54;
-    color: #fff;
+    background: $background-highlight-gradient;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px $shadow-highlight;
+    color: $text-highlight;
     font-size: 1.4rem;
     opacity: 0.5;
     transition: opacity 0.5s ease-in-out;

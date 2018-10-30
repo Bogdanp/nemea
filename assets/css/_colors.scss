@@ -1,0 +1,10 @@
+$background: #ffffff;
+$background-highlight: #4648ff;
+$background-highlight-gradient: linear-gradient($background-highlight, darken($background-highlight, 3%));
+
+$shadow: #f7f8fb;
+$shadow-highlight: transparentize($background-highlight, 0.66);
+
+$text: #131823;
+$text-highlight: #ffffff;
+$text-faded: #bdc5d4;
