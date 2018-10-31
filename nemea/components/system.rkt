@@ -3,7 +3,8 @@
 (require racket/contract
          racket/generic
          racket/list
-         racket/match)
+         racket/match
+         threading)
 
 (provide gen:component
          component?
@@ -25,10 +26,12 @@
 
 (struct system (definitions references components))
 
-(define (group h x ys)
-  (foldl (lambda (y acc)
-           (hash-set acc y (cons x (hash-ref acc y '()))))
-         h ys))
+(define (group references component-id dep-ids)
+  (for/fold ([references-out references])
+            ([dep-id dep-ids])
+    (~>> (hash-ref references-out dep-id '())
+         (cons component-id)
+         (hash-set references-out dep-id))))
 
 (define/contract (make-system spec)
   (-> (listof (or/c
