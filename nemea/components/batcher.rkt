@@ -81,8 +81,8 @@
     (loop)))
 
 (define (upsert-batch! batcher batch)
-  (with-handlers ([exn? (lambda (e)
-                          (log-batcher-error "failed to upsert: ~a" (exn-message e)))])
+  (with-handlers ([exn:fail? (lambda (e)
+                               (log-batcher-error "failed to upsert: ~a" (exn-message e)))])
     (call-with-database-transaction (batcher-database batcher)
       (lambda (conn)
         (for ([(grouping visits) (in-hash batch)])

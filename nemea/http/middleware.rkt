@@ -19,5 +19,5 @@
 
 (define ((handle-custom-exns app) req)
   (with-handlers ([exn:bad-request? bad-request->response]
-                  [exn? internal-error->response])
+                  [exn:fail? internal-error->response])
     (app req)))
