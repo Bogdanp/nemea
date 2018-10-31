@@ -21,7 +21,16 @@
                   :active="currentReport == 'avg-time'"
                   @activate="reportChanged"></totals-box>
     </div>
+
     <div class="charts">
+    </div>
+
+    <div class="reports">
+      <card title="Pages">
+      </card>
+
+      <card title="Referrers">
+      </card>
     </div>
   </div>
 </template>
@@ -29,11 +38,12 @@
 <script>
   import { getDailyReport} from "../lib/reporting.js";
 
+  import Card from "../components/Card.vue";
   import TotalsBox from "../components/TotalsBox.vue";
 
   export default {
     name: "Dashboard",
-    components: {TotalsBox},
+    components: {Card, TotalsBox},
 
     data() {
       return {
@@ -72,6 +82,12 @@
     padding: 1rem;
   }
 
+  .reports {
+    display: grid;
+    row-gap: 1rem;
+    padding: 1rem;
+  }
+
   @media (min-width: 640px) {
     .totals {
       column-gap: 1rem;
@@ -83,6 +99,11 @@
     .totals {
       column-gap: 1rem;
       grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+
+    .reports {
+      column-gap: 1rem;
+      grid-template-columns: 1fr 1fr;
     }
   }
 </style>

@@ -3,6 +3,7 @@ $background-highlight: #4648ff;
 $background-highlight-gradient: linear-gradient($background-highlight, darken($background-highlight, 3%));
 
 $shadow: #f7f8fb;
+$shadow-darker: darken($shadow, 3%);
 $shadow-highlight: transparentize($background-highlight, 0.66);
 
 $text: #131823;
