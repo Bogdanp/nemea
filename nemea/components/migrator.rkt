@@ -13,23 +13,23 @@
          "system.rkt")
 
 (provide (contract-out
-          [struct migrations ((database database?))]
-          [make-migrations (-> database? migrations?)]))
+          [struct migrator ((database database?))]
+          [make-migrator (-> database? migrator?)]))
 
-(define-logger migrations)
+(define-logger migrator)
 
-(struct migrations (database)
+(struct migrator (database)
   #:methods gen:component
-  [(define (component-start migrations)
-     (migrate! migrations)
-     migrations)
+  [(define (component-start migrator)
+     (migrate! migrator)
+     migrator)
 
-   (define (component-stop migrations)
+   (define (component-stop migrator)
      (void))])
 
-(define (make-migrations database)
-  (-> database? migrations?)
-  (migrations database))
+(define (make-migrator database)
+  (-> database? migrator?)
+  (migrator database))
 
 (define-runtime-path parent-path ".")
 (define migration-paths
@@ -41,17 +41,17 @@
    string-ci<?))
 
 (define (migrate-one! conn ref migration-path)
-  (log-migrations-info "performing migration ~s" ref)
+  (log-migrator-info "performing migration ~s" ref)
   (query-exec conn (file->string migration-path))
   (query-exec conn "insert into migrations values($1)" ref))
 
-(define (migrate! migrations)
-  (with-database-connection (conn (migrations-database migrations))
+(define (migrate! migrator)
+  (with-database-connection (conn (migrator-database migrator))
     (query-exec conn "create table if not exists migrations(ref text not null unique)")
     (define latest-ref
       (or (query-maybe-value conn "select ref from migrations") ""))
 
-    (log-migrations-info "performing migrations")
+    (log-migrator-info "performing migrations")
     (for ([migration-path migration-paths])
       (define ref (path->string (last (explode-path migration-path))))
       (when (string-ci<? latest-ref ref)
@@ -61,4 +61,4 @@
             (migrate-one! conn ref migration-path))
           #:isolation 'serializable)))
 
-    (log-migrations-info "migrations complete")))
+    (log-migrator-info "migrations complete")))

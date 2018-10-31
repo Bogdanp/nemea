@@ -6,7 +6,7 @@
          web-server/web-server
          "components/batcher.rkt"
          "components/database.rkt"
-         "components/migrations.rkt"
+         "components/migrator.rkt"
          "components/reporter.rkt"
          "components/system.rkt"
          (prefix-in config: "config.rkt")
@@ -25,7 +25,7 @@
                                #:database config:db-name
                                #:max-connections config:db-max-connections
                                #:max-idle-connections config:db-max-idle-connections))
-     (migrations [database] ,make-migrations)
+     (migrator [database] ,make-migrator)
      (reporter [database] ,make-reporter)
      (server [app] ,(make-server #:listen-ip config:listen-ip
                                  #:port config:port)))))
@@ -40,7 +40,7 @@
      config:log-level 'batcher
      config:log-level 'database
      config:log-level 'http-error
-     config:log-level 'migrations
+     config:log-level 'migrator
      config:log-level 'server
      config:log-level 'system))
 

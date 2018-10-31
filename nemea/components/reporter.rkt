@@ -63,13 +63,13 @@
   (require rackunit
            rackunit/text-ui
            (prefix-in config: "../config.rkt")
-           "migrations.rkt")
+           "migrator.rkt")
 
   (define test-system
     (make-system `((database ,(make-database #:database "nemea_tests"
                                              #:username "nemea"
                                              #:password "nemea"))
-                   (migrations [database] ,make-migrations)
+                   (migrator [database] ,make-migrator)
                    (reporter [database] ,make-reporter))))
 
   (run-tests

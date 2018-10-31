@@ -137,14 +137,14 @@ SQL
 (module+ test
   (require rackunit
            rackunit/text-ui
-           "migrations.rkt")
+           "migrator.rkt")
 
   (define test-system
     (make-system `((database ,(make-database #:database "nemea_tests"
                                              #:username "nemea"
                                              #:password "nemea"))
                    (batcher (database) ,(make-batcher))
-                   (migrations (database) ,make-migrations))))
+                   (migrator (database) ,make-migrator))))
 
   (run-tests
    (test-suite
