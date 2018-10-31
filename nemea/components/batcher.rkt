@@ -152,9 +152,8 @@ SQL
     #:before
     (lambda ()
       (system-start test-system)
-      (call-with-database-connection (system-get test-system 'database)
-        (lambda (conn)
-          (query-exec conn "truncate page_visits"))))
+      (with-database-connection (conn (system-get test-system 'database))
+        (query-exec conn "truncate page_visits")))
 
     #:after
     (lambda ()
@@ -167,9 +166,8 @@ SQL
       (sleep 0.1) ;; force the current thread to yield
 
       (check-eq?
-       (call-with-database-connection (system-get test-system 'database)
-         (lambda (conn)
-           (query-value conn "select visits from page_visits order by date desc limit 1")))
+       (with-database-connection (conn (system-get test-system 'database))
+         (query-value conn "select visits from page_visits order by date desc limit 1"))
        2)
 
       (enqueue (system-get test-system 'batcher) (page-visit (string->url "http://example.com/a") #f 1 #f))
@@ -180,13 +178,11 @@ SQL
 
 
       (check-eq?
-       (call-with-database-connection (system-get test-system 'database)
-         (lambda (conn)
-           (query-value conn "select visits from page_visits where path = '/a' order by date desc limit 1")))
+       (with-database-connection (conn (system-get test-system 'database))
+         (query-value conn "select visits from page_visits where path = '/a' order by date desc limit 1"))
        4)
 
       (check-eq?
-       (call-with-database-connection (system-get test-system 'database)
-         (lambda (conn)
-           (query-value conn "select visits from page_visits where path = '/b' order by date desc limit 1")))
+       (with-database-connection (conn (system-get test-system 'database))
+         (query-value conn "select visits from page_visits where path = '/b' order by date desc limit 1"))
        1)))))

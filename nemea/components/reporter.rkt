@@ -79,10 +79,9 @@
     (lambda ()
       (system-start test-system)
 
-      (call-with-database-connection (system-get test-system 'database)
-        (lambda (conn)
-          (query-exec conn "truncate page_visits")
-          (query-exec conn #<<SQL
+      (with-database-connection (conn (system-get test-system 'database))
+        (query-exec conn "truncate page_visits")
+        (query-exec conn #<<SQL
 insert into
   page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits)
 values
@@ -95,7 +94,7 @@ values
   ('2018-08-23', 'example.com', '/b', '', '', '', '', '', 2),
   ('2018-08-24', 'example.com', '/', '', '', '', '', '', 1)
 SQL
-                      ))))
+                    )))
 
     #:after (lambda () (system-stop test-system))
 

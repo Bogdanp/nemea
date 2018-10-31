@@ -22,7 +22,9 @@
                                                                   'repeatable-read
                                                                   'read-committed
                                                                   'read-uncommitted
-                                                                  false/c)) any/c)]))
+                                                                  false/c)) any/c)])
+
+         with-database-connection)
 
 (struct database-opts (database username password server port max-connections max-idle-connections)
   #:transparent)
@@ -69,12 +71,16 @@
     (lambda () (proc connection))
     (lambda () (disconnect connection))))
 
-(define (call-with-database-transaction database proc #:isolation [isolation #f])
+(define-syntax-rule (with-database-connection (name database) e ...)
   (call-with-database-connection database
-    (lambda (conn)
-      (call-with-transaction conn
-        #:isolation isolation
-        (lambda () (proc conn))))))
+    (lambda (name)
+      e ...)))
+
+(define (call-with-database-transaction database proc #:isolation [isolation #f])
+  (with-database-connection (conn database)
+    (call-with-transaction conn
+      #:isolation isolation
+      (lambda () (proc conn)))))
 
 (module+ test
   (require rackunit)
@@ -85,6 +91,11 @@
 
   (check-eq?
    (call-with-database-connection db
-                                  (lambda (conn)
-                                    (query-value conn "select 1")))
+     (lambda (conn)
+       (query-value conn "select 1")))
+   1)
+
+  (check-eq?
+   (with-database-connection (conn db)
+     (query-value conn "select 1"))
    1))

@@ -46,20 +46,19 @@
   (query-exec conn "insert into migrations values($1)" ref))
 
 (define (migrate! migrations)
-  (call-with-database-connection (migrations-database migrations)
-    (lambda (conn)
-      (query-exec conn "create table if not exists migrations(ref text not null unique)")
-      (define latest-ref
-        (or (query-maybe-value conn "select ref from migrations") ""))
+  (with-database-connection (conn (migrations-database migrations))
+    (query-exec conn "create table if not exists migrations(ref text not null unique)")
+    (define latest-ref
+      (or (query-maybe-value conn "select ref from migrations") ""))
 
-      (log-migrations-info "performing migrations")
-      (for ([migration-path migration-paths])
-        (define ref (path->string (last (explode-path migration-path))))
-        (when (string-ci<? latest-ref ref)
-          (call-with-transaction
-            conn
-            (lambda ()
-              (migrate-one! conn ref migration-path))
-            #:isolation 'serializable)))
+    (log-migrations-info "performing migrations")
+    (for ([migration-path migration-paths])
+      (define ref (path->string (last (explode-path migration-path))))
+      (when (string-ci<? latest-ref ref)
+        (call-with-transaction
+          conn
+          (lambda ()
+            (migrate-one! conn ref migration-path))
+          #:isolation 'serializable)))
 
-      (log-migrations-info "migrations complete"))))
+    (log-migrations-info "migrations complete")))
