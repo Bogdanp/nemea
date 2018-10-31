@@ -9,7 +9,7 @@
          "utils.rkt")
 
 (provide (contract-out
-          (get-daily-report (-> reporter? (-> request? response?)))))
+          [get-daily-report (-> reporter? (-> request? response?))]))
 
 (define ((get-daily-report reporter) req)
   (define query (url-query (request-uri req)))

@@ -10,9 +10,9 @@
          "utils.rkt")
 
 (provide (contract-out
-          (struct reporter ((database database?)))
-          (make-reporter (-> database? reporter?))
-          (make-daily-report (-> reporter? date? date? hash?))))
+          [struct reporter ((database database?))]
+          [make-reporter (-> database? reporter?)]
+          [make-daily-report (-> reporter? date? date? hash?)]))
 
 (struct reporter (database)
   #:methods gen:component

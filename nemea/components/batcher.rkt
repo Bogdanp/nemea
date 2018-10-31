@@ -14,18 +14,18 @@
          "utils.rkt")
 
 (provide (contract-out
-          (struct batcher ((database database?)
+          [struct batcher ((database database?)
                            (events async-channel?)
                            (timeout exact-positive-integer?)
                            (listener-thread (or/c false/c thread?))
-                           (timer-thread (or/c false/c thread?))))
+                           (timer-thread (or/c false/c thread?)))]
 
-          (make-batcher (->* ()
+          [make-batcher (->* ()
                              (#:channel-size exact-positive-integer?
                               #:timeout exact-positive-integer?)
-                             (-> database? batcher?)))
+                             (-> database? batcher?))]
 
-          (enqueue (-> batcher? page-visit? void?))))
+          [enqueue (-> batcher? page-visit? void?)]))
 
 (define-logger batcher)
 

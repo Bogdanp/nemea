@@ -7,14 +7,14 @@
          "app.rkt")
 
 (provide (contract-out
-          (struct server ((options server-opts?)
+          [struct server ((options server-opts?)
                           (app app?)
-                          (stopper (or/c false/c (-> void?)))))
+                          (stopper (or/c false/c (-> void?))))]
 
-          (make-server (->* ()
+          [make-server (->* ()
                             (#:listen-ip string?
                              #:port exact-positive-integer?)
-                            (-> app? server?)))))
+                            (-> app? server?))]))
 
 (struct server-opts (listen-ip port)
   #:transparent)

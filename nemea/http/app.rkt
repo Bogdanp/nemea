@@ -20,8 +20,8 @@
          "utils.rkt")
 
 (provide (contract-out
-          (struct app ((dispatcher dispatcher/c)))
-          (make-app (-> database? batcher? reporter? app?))))
+          [struct app ((dispatcher dispatcher/c))]
+          [make-app (-> database? batcher? reporter? app?)]))
 
 (define-runtime-path parent-path ".")
 (define static-path

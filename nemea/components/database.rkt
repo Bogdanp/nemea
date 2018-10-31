@@ -5,16 +5,16 @@
          "system.rkt")
 
 (provide (contract-out
-          (struct database ((connection connection?)
-                            (options database-opts?)))
-          (make-database (->* (#:database string?
+          [struct database ((connection connection?)
+                            (options database-opts?))]
+          [make-database (->* (#:database string?
                                #:username string?
                                #:password string?)
                               (#:server string?
                                #:port exact-positive-integer?
                                #:max-connections exact-positive-integer?
                                #:max-idle-connections exact-positive-integer?)
-                              (-> database?)))))
+                              (-> database?))]))
 
 (struct database-opts (database username password server port max-connections max-idle-connections)
   #:transparent)

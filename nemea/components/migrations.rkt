@@ -13,8 +13,8 @@
          "system.rkt")
 
 (provide (contract-out
-          (struct migrations ((database database?)))
-          (make-migrations (-> database? migrations?))))
+          [struct migrations ((database database?))]
+          [make-migrations (-> database? migrations?)]))
 
 (define-logger migrations)
 
