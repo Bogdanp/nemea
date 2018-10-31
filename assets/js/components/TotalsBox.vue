@@ -1,13 +1,61 @@
 <template>
-  <div class="totals-box" v-bind:class="{ 'totals-box--active': active }">
-    <h2 class="totals-box__value">{{ value }}</h2>
+  <div class="totals-box totals-box"
+       v-on:click.capture="$emit('activate', id)"
+       v-bind:class="{ 'totals-box--active': active }">
+    <h2 class="totals-box__value">{{ formattedValue }}</h2>
     <h6 class="totals-box__label">{{ label }}</h6>
   </div>
 </template>
 
 <script>
+  const NUMBER_FORMATTER = new Intl.NumberFormat();
+
+  const FORMATTERS = {
+    duration(value) {
+      const minutes = Math.floor(value / 60);
+      const seconds = value % 60;
+
+      return minutes ? `${minutes}m ${seconds}s` : `${seconds}s`;
+    },
+
+    numeric(value) {
+      return NUMBER_FORMATTER.format(value);
+    }
+  };
+
   export default {
-    props: ["label", "value", "active"]
+    props: {
+      id: {
+        type: String,
+        required: true,
+      },
+
+      label: {
+        type: String,
+        required: true,
+      },
+
+      value: {
+        type: Number,
+        required: true,
+      },
+
+      active: {
+        type: Boolean,
+        default: false,
+      },
+
+      formatter: {
+        type: String,
+        default: "numeric",
+      },
+    },
+
+    computed: {
+      formattedValue() {
+        return FORMATTERS[this.formatter](this.value);
+      }
+    }
   };
 </script>
 
@@ -22,7 +70,7 @@
     color: $text-highlight;
     font-size: 1.4rem;
     opacity: 0.5;
-    transition: opacity 0.5s ease-in-out;
+    transition: opacity 0.3s ease-in-out;
 
     &:hover {
       opacity: 0.9;

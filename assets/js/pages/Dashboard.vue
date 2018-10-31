@@ -1,13 +1,12 @@
 <template>
   <div class="container">
     <div class="totals">
-      <totals-box label="Visits" value="8,351" active="true"></totals-box>
-      <totals-box label="Sessions" value="8,200"></totals-box>
-      <totals-box label="Visitors" value="8,001"></totals-box>
-      <totals-box label="Avg. Time on Site" value="50s"></totals-box>
+      <totals-box id="visits" label="Visits" :value="8351" :active="true" @activate="onActivate"></totals-box>
+      <totals-box id="sessions" label="Sessions" :value="8200" @activate="onActivate"></totals-box>
+      <totals-box id="visitors" label="Visitors" :value="8001" @activate="onActivate"></totals-box>
+      <totals-box id="time" label="Avg. Time on Site" :value="65" formatter="duration" @activate="onActivate"></totals-box>
     </div>
     <div class="charts">
-      <area-chart></area-chart>
     </div>
   </div>
 </template>
@@ -17,7 +16,13 @@
 
   export default {
     name: "Dashboard",
-    components: {TotalsBox}
+    components: {TotalsBox},
+
+    methods: {
+      onActivate(id) {
+        console.log(id);
+      }
+    }
   };
 </script>
 
