@@ -3,6 +3,7 @@
 (require db
          gregor
          racket/contract
+         racket/match
          sql
          "database.rkt"
          "system.rkt"
@@ -11,7 +12,7 @@
 (provide (contract-out
           (struct reporter ((database database?)))
           (make-reporter (-> database? reporter?))
-          (make-daily-report (-> reporter? date? date? (listof hash?)))))
+          (make-daily-report (-> reporter? date? date? hash?))))
 
 (struct reporter (database)
   #:methods gen:component
@@ -22,18 +23,42 @@
   (reporter database))
 
 (define (make-daily-report reporter start-date end-date)
-  (define conn (database-connection (reporter-database reporter)))
-  (for/list ([(date host path referrer-host visits)
-              (in-query conn (select date host path referrer_host visits
-                                     #:from page_visits
-                                     #:where (and (>= date ,(date->sql-date start-date))
-                                                  (< date ,(date->sql-date end-date)))))])
+  (define sql-start-date (date->sql-date start-date))
+  (define sql-end-date (date->sql-date end-date))
 
-    (hasheq 'date (sql-date->moment date)
-            'host host
-            'path path
-            'referrer-host referrer-host
-            'visits visits)))
+  (define (get-totals conn)
+    (match (query-row conn (select (coalesce (sum visits) 0)
+                                   #:from page_visits
+                                   #:where (and (>= date ,sql-start-date)
+                                                (<  date ,sql-end-date))))
+      [(vector visits)
+       (hasheq 'visits visits
+               'sessions 0
+               'visitors 0
+               'avg-time 0)]))
+
+  (define (get-breakdown conn)
+    (for/list ([(date host path referrer-host visits)
+                (in-query conn (select date host path referrer_host visits
+                                       #:from page_visits
+                                       #:where (and (>= date ,sql-start-date)
+                                                    (< date ,sql-end-date))))])
+
+      (hasheq 'date (~t (sql-date->moment date) "yyyy-MM-dd")
+              'host host
+              'path path
+              'referrer-host referrer-host
+              'visits visits
+              'sessions 0
+              'visitors 0)))
+
+  (define conn (database-connection (reporter-database reporter)))
+  (call-with-transaction conn
+    #:isolation 'repeatable-read
+    (lambda ()
+      (hasheq 'totals (get-totals conn)
+              'breakdown (get-breakdown conn)))))
+
 
 (module+ test
   (require rackunit
@@ -81,10 +106,11 @@ SQL
         (system-get test-system 'reporter)
         (date 2018 8 20)
         (date 2018 8 24))
-       (list (hasheq 'date (moment 2018 8 20 #:tz config:timezone) 'host "example.com" 'path "/" 'referrer-host "" 'visits 10)
-             (hasheq 'date (moment 2018 8 20 #:tz config:timezone) 'host "example.com" 'path "/a" 'referrer-host "" 'visits 1)
-             (hasheq 'date (moment 2018 8 20 #:tz config:timezone) 'host "example.com" 'path "/b" 'referrer-host "" 'visits 2)
-             (hasheq 'date (moment 2018 8 21 #:tz config:timezone) 'host "example.com" 'path "/a" 'referrer-host "" 'visits 3)
-             (hasheq 'date (moment 2018 8 21 #:tz config:timezone) 'host "example.com" 'path "/b" 'referrer-host "" 'visits 5)
-             (hasheq 'date (moment 2018 8 23 #:tz config:timezone) 'host "example.com" 'path "/a" 'referrer-host "" 'visits 1)
-             (hasheq 'date (moment 2018 8 23 #:tz config:timezone) 'host "example.com" 'path "/b" 'referrer-host "" 'visits 2)))))))
+       (hasheq 'totals (hasheq 'visits 24 'sessions 0 'visitors 0 'avg-time 0)
+               'breakdown (list (hasheq 'date "2018-08-20" 'host "example.com" 'path "/" 'referrer-host "" 'visits 10 'sessions 0 'visitors 0)
+                                (hasheq 'date "2018-08-20" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 1 'sessions 0 'visitors 0)
+                                (hasheq 'date "2018-08-20" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 2 'sessions 0 'visitors 0)
+                                (hasheq 'date "2018-08-21" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 3 'sessions 0 'visitors 0)
+                                (hasheq 'date "2018-08-21" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 5 'sessions 0 'visitors 0)
+                                (hasheq 'date "2018-08-23" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 1 'sessions 0 'visitors 0)
+                                (hasheq 'date "2018-08-23" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 2 'sessions 0 'visitors 0))))))))

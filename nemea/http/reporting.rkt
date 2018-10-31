@@ -21,13 +21,7 @@
     [(date<=? end-date start-date) (response/bad-request "start date must be less than end date")]
 
     [else
-     (define report (make-daily-report reporter start-date end-date))
-     (response/json #:body (report->jsexpr report))]))
-
-(define (report->jsexpr report)
-  (hasheq 'results (map (lambda (res)
-                          (hash-set res 'date (date->string (hash-ref res 'date))))
-                        report)))
+     (response/json #:body (make-daily-report reporter start-date end-date))]))
 
 (define (date->string d)
   (~t d "yyyy-MM-dd"))
