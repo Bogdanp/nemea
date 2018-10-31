@@ -50,7 +50,8 @@
               'referrer-host referrer-host
               'visits visits
               'sessions 0
-              'visitors 0)))
+              'visitors 0
+              'avg-time 0)))
 
   (call-with-database-transaction (reporter-database reporter)
     #:isolation 'repeatable-read
@@ -105,10 +106,10 @@ SQL
         (date 2018 8 20)
         (date 2018 8 24))
        (hasheq 'totals (hasheq 'visits 24 'sessions 0 'visitors 0 'avg-time 0)
-               'breakdown (list (hasheq 'date "2018-08-20" 'host "example.com" 'path "/" 'referrer-host "" 'visits 10 'sessions 0 'visitors 0)
-                                (hasheq 'date "2018-08-20" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 1 'sessions 0 'visitors 0)
-                                (hasheq 'date "2018-08-20" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 2 'sessions 0 'visitors 0)
-                                (hasheq 'date "2018-08-21" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 3 'sessions 0 'visitors 0)
-                                (hasheq 'date "2018-08-21" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 5 'sessions 0 'visitors 0)
-                                (hasheq 'date "2018-08-23" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 1 'sessions 0 'visitors 0)
-                                (hasheq 'date "2018-08-23" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 2 'sessions 0 'visitors 0))))))))
+               'breakdown (list (hasheq 'date "2018-08-20" 'host "example.com" 'path "/" 'referrer-host "" 'visits 10 'sessions 0 'visitors 0 'avg-time 0)
+                                (hasheq 'date "2018-08-20" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 1 'sessions 0 'visitors 0 'avg-time 0)
+                                (hasheq 'date "2018-08-20" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 2 'sessions 0 'visitors 0 'avg-time 0)
+                                (hasheq 'date "2018-08-21" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 3 'sessions 0 'visitors 0 'avg-time 0)
+                                (hasheq 'date "2018-08-21" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 5 'sessions 0 'visitors 0 'avg-time 0)
+                                (hasheq 'date "2018-08-23" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 1 'sessions 0 'visitors 0 'avg-time 0)
+                                (hasheq 'date "2018-08-23" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 2 'sessions 0 'visitors 0 'avg-time 0))))))))
