@@ -39,6 +39,7 @@
      config:log-level 'app
      config:log-level 'batcher
      config:log-level 'database
+     config:log-level 'http-error
      config:log-level 'migrations
      config:log-level 'server
      config:log-level 'system))
