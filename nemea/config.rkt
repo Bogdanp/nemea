@@ -20,7 +20,7 @@
 (define db-port (or (url-port db-url) 5432))
 (define db-name (path/param-path (car (url-path db-url))))
 
-(define db-max-connections (string->number (or (getenv "NEMEA_DB_MAX_CONNECTIONS") "4")))
+(define db-max-connections (string->number (or (getenv "NEMEA_DB_MAX_CONNECTIONS") "16")))
 (define db-max-idle-connections (string->number (or (getenv "NEMEA_DB_MAX_IDLE_CONNECTIONS") "2")))
 
 (define batcher-channel-size (string->number (or (getenv "NEMEA_BATCHER_CHANNEL_SIZE") "1000000")))

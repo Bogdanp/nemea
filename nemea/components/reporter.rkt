@@ -52,10 +52,9 @@
               'sessions 0
               'visitors 0)))
 
-  (define conn (database-connection (reporter-database reporter)))
-  (call-with-transaction conn
+  (call-with-database-transaction (reporter-database reporter)
     #:isolation 'repeatable-read
-    (lambda ()
+    (lambda (conn)
       (hasheq 'totals (get-totals conn)
               'breakdown (get-breakdown conn)))))
 
@@ -80,10 +79,10 @@
     (lambda ()
       (system-start test-system)
 
-      (query-exec (database-connection (system-get test-system 'database)) "truncate page_visits")
-      (query-exec
-       (database-connection (system-get test-system 'database))
-       #<<SQL
+      (call-with-database-connection (system-get test-system 'database)
+        (lambda (conn)
+          (query-exec conn "truncate page_visits")
+          (query-exec conn #<<SQL
 insert into
   page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits)
 values
@@ -96,7 +95,7 @@ values
   ('2018-08-23', 'example.com', '/b', '', '', '', '', '', 2),
   ('2018-08-24', 'example.com', '/', '', '', '', '', '', 1)
 SQL
-       ))
+                      ))))
 
     #:after (lambda () (system-stop test-system))
 

@@ -83,9 +83,8 @@
 (define (upsert-batch! batcher batch)
   (with-handlers ([exn? (lambda (e)
                           (log-batcher-error "failed to upsert: ~a" (exn-message e)))])
-    (define conn (database-connection (batcher-database batcher)))
-    (call-with-transaction conn
-      (lambda ()
+    (call-with-database-transaction (batcher-database batcher)
+      (lambda (conn)
         (for ([(grouping visits) (in-hash batch)])
           (upsert-visits! conn grouping visits))))))
 
@@ -118,7 +117,7 @@ do update
     page_visits.os = $7 and
     page_visits.browser = $8
 SQL
-)
+  )
 
 (struct grouping (date host path referrer-host referrer-path country os browser)
   #:transparent)
@@ -153,9 +152,9 @@ SQL
     #:before
     (lambda ()
       (system-start test-system)
-      (query-exec
-       (database-connection (system-get test-system 'database))
-       "truncate page_visits"))
+      (call-with-database-connection (system-get test-system 'database)
+        (lambda (conn)
+          (query-exec conn "truncate page_visits"))))
 
     #:after
     (lambda ()
@@ -168,9 +167,9 @@ SQL
       (sleep 0.1) ;; force the current thread to yield
 
       (check-eq?
-       (query-value
-        (database-connection (system-get test-system 'database))
-        "select visits from page_visits order by date desc limit 1")
+       (call-with-database-connection (system-get test-system 'database)
+         (lambda (conn)
+           (query-value conn "select visits from page_visits order by date desc limit 1")))
        2)
 
       (enqueue (system-get test-system 'batcher) (page-visit (string->url "http://example.com/a") #f 1 #f))
@@ -179,13 +178,15 @@ SQL
       (!> (system-get test-system 'batcher) 'stop)
       (sleep 0.1) ;; force the current thread to yield
 
+
       (check-eq?
-       (query-value
-        (database-connection (system-get test-system 'database))
-        "select visits from page_visits where path = '/a' order by date desc limit 1")
+       (call-with-database-connection (system-get test-system 'database)
+         (lambda (conn)
+           (query-value conn "select visits from page_visits where path = '/a' order by date desc limit 1")))
        4)
+
       (check-eq?
-       (query-value
-        (database-connection (system-get test-system 'database))
-        "select visits from page_visits where path = '/b' order by date desc limit 1")
+       (call-with-database-connection (system-get test-system 'database)
+         (lambda (conn)
+           (query-value conn "select visits from page_visits where path = '/b' order by date desc limit 1")))
        1)))))

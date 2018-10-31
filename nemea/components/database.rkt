@@ -1,11 +1,12 @@
 #lang racket/base
 
 (require db
+         racket/class
          racket/contract
          "system.rkt")
 
 (provide (contract-out
-          [struct database ((connection connection?)
+          [struct database ((connection-pool connection-pool?)
                             (options database-opts?))]
           [make-database (->* (#:database string?
                                #:username string?
@@ -14,27 +15,33 @@
                                #:port exact-positive-integer?
                                #:max-connections exact-positive-integer?
                                #:max-idle-connections exact-positive-integer?)
-                              (-> database?))]))
+                              (-> database?))]
+          [call-with-database-connection (-> database? (-> connection? any/c) any/c)]
+          [call-with-database-transaction (->* (database? (-> connection? any/c))
+                                               (#:isolation (or/c 'serializable
+                                                                  'repeatable-read
+                                                                  'read-committed
+                                                                  'read-uncommitted
+                                                                  false/c)) any/c)]))
 
 (struct database-opts (database username password server port max-connections max-idle-connections)
   #:transparent)
 
-(struct database (connection options)
+(struct database (connection-pool options)
   #:methods gen:component
   [(define (component-start a-database)
      (define options (database-options a-database))
      (struct-copy database a-database
-                  [connection (virtual-connection
-                               (connection-pool
-                                #:max-connections (database-opts-max-connections options)
-                                #:max-idle-connections (database-opts-max-idle-connections options)
-                                (lambda ()
-                                  (postgresql-connect
-                                   #:database (database-opts-database options)
-                                   #:user (database-opts-username options)
-                                   #:password (database-opts-password options)
-                                   #:server (database-opts-server options)
-                                   #:port (database-opts-port options)))))]))
+                  [connection-pool (connection-pool
+                                    #:max-connections (database-opts-max-connections options)
+                                    #:max-idle-connections (database-opts-max-idle-connections options)
+                                    (lambda ()
+                                      (postgresql-connect
+                                       #:database (database-opts-database options)
+                                       #:user (database-opts-username options)
+                                       #:password (database-opts-password options)
+                                       #:server (database-opts-server options)
+                                       #:port (database-opts-port options))))]))
 
    (define (component-stop database)
      (void))])
@@ -54,6 +61,21 @@
                               max-connections
                               max-idle-connections)))
 
+(define (call-with-database-connection database proc)
+  (define pool (database-connection-pool database))
+  (define connection (connection-pool-lease pool))
+  (dynamic-wind
+    (lambda () #f)
+    (lambda () (proc connection))
+    (lambda () (disconnect connection))))
+
+(define (call-with-database-transaction database proc #:isolation [isolation #f])
+  (call-with-database-connection database
+    (lambda (conn)
+      (call-with-transaction conn
+        #:isolation isolation
+        (lambda () (proc conn))))))
+
 (module+ test
   (require rackunit)
 
@@ -61,4 +83,8 @@
                                               #:username "nemea"
                                               #:password "nemea"))))
 
-  (check-eq? (query-value (database-connection db) "select 1") 1))
+  (check-eq?
+   (call-with-database-connection db
+                                  (lambda (conn)
+                                    (query-value conn "select 1")))
+   1))
