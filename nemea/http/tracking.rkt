@@ -4,7 +4,7 @@
          threading
          web-server/http
          "../components/batcher.rkt"
-         "../components/page-visits.rkt"
+         "../components/page-visit.rkt"
          "middleware.rkt"
          "utils.rkt")
 

@@ -48,7 +48,7 @@
         file-server
         (dispatch/servlet
          (~> dispatch
-             handle-custom-exns)))))
+             wrap-custom-exns)))))
 
 (define (not-found req)
   (response/json #:code 404

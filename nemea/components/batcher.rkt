@@ -9,7 +9,7 @@
          threading
          (prefix-in config: "../config.rkt")
          "database.rkt"
-         "page-visits.rkt"
+         "page-visit.rkt"
          "system.rkt"
          "utils.rkt")
 
