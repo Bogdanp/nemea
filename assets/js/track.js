@@ -37,7 +37,6 @@
     options = options || {};
     options.path = options.path || "/";
     options.samesite = options.samesite || "strict";
-    options["max-age"] = options["max-age"] || SESSION_ID_COOKIE_MAX_AGE;
 
     var cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value);
     for (var prop in options) {
@@ -51,26 +50,48 @@
   }
 
   function normalizeURL(url) {
+    return parseURL(url) + "";
+  }
+
+  function parseURL(url) {
     var anchor = document.createElement("a");
     anchor.href = url;
-    return anchor.href + "";
+    return anchor;
+  }
+
+  function addURLParams(url, params) {
+    var normalizedURL = normalizeURL(url);
+    var pairs = [];
+    for (var name in params) {
+      pairs.push(
+        encodeURIComponent(name) + "=" + encodeURIComponent(params[name])
+      );
+    }
+
+    if (normalizedURL.indexOf("?") != normalizedURL.length - 1) {
+      normalizedURL += "?";
+    }
+
+    return normalizedURL + pairs.join("&");
   }
 
   function collectData() {
     var cookies = parseCookies();
     var sessionId = cookies[SESSION_ID_COOKIE] || generateId();
-    setCookie(SESSION_ID_COOKIE, sessionId);
+    setCookie(SESSION_ID_COOKIE, sessionId, {
+      "max-age": SESSION_ID_COOKIE_MAX_AGE
+    });
 
     var uniqueId = cookies[UNIQUE_ID_COOKIE] || generateId();
     setCookie(UNIQUE_ID_COOKIE, uniqueId, {
       "max-age": UNIQUE_ID_COOKIE_MAX_AGE
     });
 
-    var referrer = document.referrer && normalizeURL(document.referrer);
     var location = window.location.href + "";
     var links = document.getElementsByTagName("link");
     for (var i = 0; i < links.length; i++) {
       var link = links[i];
+
       if (
         link.getAttribute("rel") === "canonical" &&
         link.hasAttribute("href")
@@ -78,6 +99,11 @@
         location = normalizeURL(link.getAttribute("href"));
         break;
       }
+    }
+
+    var referrer = document.referrer && normalizeURL(document.referrer);
+    if (referrer && parseURL(location).host === parseURL(referrer).host) {
+      referrer = "";
     }
 
     return {
@@ -94,23 +120,10 @@
     }
 
     var script = document.getElementById("nemea");
-    var trackURL = normalizeURL(script.src.replace("track.js", "track"));
-    var data = collectData();
-
-    var params = [];
-    for (var name in data) {
-      params.push(
-        encodeURIComponent(name) + "=" + encodeURIComponent(data[name])
-      );
-    }
-
-    if (trackURL.indexOf("?") != trackURL.length - 1) {
-      trackURL += "?";
-    }
-    trackURL += params.join("&");
+    var trackURL = script.src.replace("track.js", "track");
 
     var img = document.createElement("img");
-    img.src = trackURL;
+    img.src = addURLParams(trackURL, collectData());
     img.onload = function() {
       document.body.removeChild(img);
     };
@@ -118,9 +131,14 @@
     document.body.appendChild(img);
   };
 
+  function call() {
+    var args = Array.prototype.slice.call(arguments);
+    var command = args.shift();
+    return commands[command] && commands[command].apply(this, args);
+  }
+  window.nemea = call;
+
   for (var i = 0; i < queue.length; i++) {
-    var call = Array.prototype.slice.call(queue[i]);
-    var command = call.shift();
-    commands[command] && commands[command].apply(commands);
+    call.apply(this, queue[i]);
   }
 })();
