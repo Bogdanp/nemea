@@ -6,7 +6,7 @@
       </slot>
     </div>
 
-    <div class="card__content">
+    <div class="card__content" v-bind:class="{ 'card__content--no-padding': noPadding }">
       <slot></slot>
     </div>
 
@@ -23,6 +23,11 @@
       title: {
         type: String,
         default: null,
+      },
+
+      noPadding: {
+        type: Boolean,
+        default: false,
       }
     }
   };
@@ -52,6 +57,10 @@
 
     &__content {
       padding: 1rem;
+
+      &--no-padding {
+        padding: 0;
+      }
     }
 
     &__footer {
