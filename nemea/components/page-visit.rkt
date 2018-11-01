@@ -4,14 +4,16 @@
          racket/contract)
 
 (provide (contract-out
-          [struct page-visit ((location url?)
-                              (client-ip (or/c false/c string?))
-                              (client-timestamp exact-positive-integer?)
-                              (client-referrer (or/c false/c url?)))]))
+          [struct page-visit ((unique-id string?)
+                              (session-id string?)
+                              (location url?)
+                              (client-referrer (or/c false/c url?))
+                              (client-ip (or/c false/c string?)))]))
 
 (struct page-visit
-  (location
-   client-ip
-   client-timestamp
-   client-referrer)
+  (unique-id
+   session-id
+   location
+   client-referrer
+   client-ip)
   #:transparent)

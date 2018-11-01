@@ -21,7 +21,9 @@
          path->mime-type)
 
 (define (assq* k xs)
-  (and~> (assq k xs) (cdr)))
+  (match (and~> (assq k xs) (cdr))
+    ["" #f]
+    [x x]))
 
 (define STATUS-LINES-BY-CODE
   (hasheq 200 #"OK"

@@ -13,9 +13,7 @@
 ;; This is on the "hot path" so it has no contract.
 (define ((track-page-visit batcher) req)
   (unless (do-not-track? req)
-    (enqueue batcher (~> (request-uri req)
-                         (url-query)
-                         (query->page-visit))))
+    (enqueue batcher (request->page-visit req)))
   (response/pixel))
 
 
@@ -33,21 +31,29 @@
   (check-true (do-not-track? (make-request #:headers (list (make-header #"DNT" #"1"))))))
 
 
-(define (query->page-visit query)
+(define (request->page-visit req)
+  ;; TODO: Handle x-forwarded-for.
+  (define client-ip (request-client-ip req))
+  (define query  (url-query (request-uri req)))
+
   (with-handlers ([exn:fail? (lambda (e)
                                (raise (exn:bad-request
-                                       "loc and cts parameters are required"
+                                       "uid, sid, loc and cts parameters are required"
                                        (current-continuation-marks))))])
-    (page-visit (string->url (assq* 'loc query))
-                (assq* 'cip query)
-                (string->number (assq* 'cts query))
-                (and~> (assq* 'cre query) (string->url)))))
+    (page-visit (assq* 'uid query)
+                (assq* 'sid query)
+                (string->url (assq* 'loc query))
+                (and~> (assq* 'ref query) (string->url))
+                client-ip)))
 
 (module+ test
-  (require rackunit)
+  (require rackunit
+           "utils-test.rkt")
 
   (check-equal?
-   (query->page-visit '((loc . "http://example.com")
-                        (cip . "127.0.0.1")
-                        (cts . "1540552567438")))
-   (page-visit (string->url "http://example.com") "127.0.0.1" 1540552567438 #f)))
+   (request->page-visit (make-request #:path "/?uid=1&sid=2&loc=http%3A%2F%2Fexample.com&ref=http%3A%2F%2Fgoogle.com"))
+   (page-visit "1"
+               "2"
+               (string->url "http://example.com")
+               (string->url "http://google.com")
+               "127.0.0.1" )))

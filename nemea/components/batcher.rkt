@@ -160,8 +160,8 @@ SQL
       (system-stop test-system))
 
     (test-case "upserts visits"
-      (enqueue (system-get test-system 'batcher) (page-visit (string->url "http://example.com/a") #f 1 #f))
-      (enqueue (system-get test-system 'batcher) (page-visit (string->url "http://example.com/a") #f 1 #f))
+      (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
+      (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
       (!> (system-get test-system 'batcher) 'timeout)
       (sleep 0.1) ;; force the current thread to yield
 
@@ -170,9 +170,9 @@ SQL
          (query-value conn "select visits from page_visits order by date desc limit 1"))
        2)
 
-      (enqueue (system-get test-system 'batcher) (page-visit (string->url "http://example.com/a") #f 1 #f))
-      (enqueue (system-get test-system 'batcher) (page-visit (string->url "http://example.com/a") #f 1 #f))
-      (enqueue (system-get test-system 'batcher) (page-visit (string->url "http://example.com/b") #f 1 #f))
+      (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
+      (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
+      (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/b") #f #f))
       (!> (system-get test-system 'batcher) 'stop)
       (sleep 0.1) ;; force the current thread to yield
 
