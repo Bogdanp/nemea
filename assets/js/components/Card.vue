@@ -1,7 +1,9 @@
 <template>
   <div class="card">
     <div class="card__header" v-if="title || $slots.header">
-      <h1>{{ title }}</h1>
+      <slot name="header">
+        <h1>{{ title }}</h1>
+      </slot>
     </div>
 
     <div class="card__content">
@@ -9,8 +11,8 @@
     </div>
 
     <div class="card__footer" v-if="$slots.footer">
-      <template slot="footer">
-      </template>
+      <slot name="footer">
+      </slot>
     </div>
   </div>
 </template>
