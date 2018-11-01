@@ -146,8 +146,8 @@ SQL
   (grouping d
             (url-host (page-visit-location pv))
             (url->path-string (page-visit-location pv))
-            (and~> (page-visit-client-referrer pv) (url-host))
-            (and~> (page-visit-client-referrer pv) (url->path-string))
+            (and~> (page-visit-referrer pv) (url-host))
+            (and~> (page-visit-referrer pv) (url->path-string))
             "" "" ""))
 
 (define (url->path-string url)
