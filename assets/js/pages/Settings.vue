@@ -19,10 +19,10 @@
 
   const trackURI = `${window.location.host}${window.location.pathname}track.js`;
   const script = `
-(function(r, o, c, k, e, t, m, a, n) {
-  r[e]=r[e]||function(){(r[e].q=r[e].q||[]).push(arguments)};t=o.createElement(c);
-  t.id=e;t.src=k;t.async=1;m=o.getElementsByTagName(c)[0];m.parentNode.insertBefore(t,m);
-})(window, document, "script", "//${trackURI}", "nemea");
+(function(n, e, m, E, a, $) {
+  n[E]=n[E]||function(){(n[E].q=n[E].q||[]).push(arguments)};$=e.createElement(m);
+  $.id=E;$.src=a;$.async=1;m=e.getElementsByTagName(m)[0];m.parentNode.insertBefore($,m)
+})(window, document, "script", "nemea", "//${trackURI}");
 
 nemea("view");
 `.trim().replace(/</g, "&lt;");
