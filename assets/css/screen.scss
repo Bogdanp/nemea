@@ -23,6 +23,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 core, pre {
+  overflow: scroll;
   font-family: "Fira Mono", "Operator Mono", "Inconsolata", monospace;
   font-size: 0.8rem;
 }
