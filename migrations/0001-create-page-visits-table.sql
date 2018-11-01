@@ -9,6 +9,8 @@ create table page_visits (
   browser text not null,
 
   visits bigint not null,
+  visitors hll not null default hll_empty(),
+  sessions hll not null default hll_empty(),
 
   unique(date, host, path, referrer_host, referrer_path, country, os, browser)
 );

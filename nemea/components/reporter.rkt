@@ -4,6 +4,7 @@
          gregor
          racket/contract
          racket/match
+         racket/math
          sql
          "database.rkt"
          "system.rkt"
@@ -28,18 +29,22 @@
 
   (define (get-totals conn)
     (match (query-row conn (select (coalesce (sum visits) 0)
+                                   (hll_cardinality (hll_union_agg visitors))
+                                   (hll_cardinality (hll_union_agg sessions))
                                    #:from page_visits
                                    #:where (and (>= date ,sql-start-date)
                                                 (<  date ,sql-end-date))))
-      [(vector visits)
+      [(vector visits visitors sessions)
        (hasheq 'visits visits
-               'sessions 0
-               'visitors 0
+               'visitors (exact-floor visitors)
+               'sessions (exact-floor sessions)
                'avg-time 0)]))
 
   (define (get-breakdown conn)
-    (for/list ([(date host path referrer-host visits)
+    (for/list ([(date host path referrer-host visits visitors sessions)
                 (in-query conn (select date host path referrer_host visits
+                                       (hll_cardinality visitors)
+                                       (hll_cardinality sessions)
                                        #:from page_visits
                                        #:where (and (>= date ,sql-start-date)
                                                     (< date ,sql-end-date))))])
@@ -49,8 +54,8 @@
               'path path
               'referrer-host referrer-host
               'visits visits
-              'sessions 0
-              'visitors 0
+              'visitors (exact-floor visitors)
+              'sessions (exact-floor sessions)
               'avg-time 0)))
 
   (call-with-database-transaction (reporter-database reporter)
@@ -84,7 +89,7 @@
         (query-exec conn "truncate page_visits")
         (query-exec conn #<<SQL
 insert into
-  page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits)
+  page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits, visitors, sessions)
 values
   ('2018-08-20', 'example.com', '/', '', '', '', '', '', 10),
   ('2018-08-20', 'example.com', '/a', '', '', '', '', '', 1),

@@ -32,6 +32,8 @@ Set up the databases:
     create database nemea_tests;
     grant all privileges on database nemea_tests to nemea;
     SQL
+    $ echo "create extension if not exists hll;" | psql -Unemea -dnemea
+    $ echo "create extension if not exists hll;" | psql -Unemea -dnemea_tests
 
 ### Running the development server
 

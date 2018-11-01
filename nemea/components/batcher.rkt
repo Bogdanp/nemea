@@ -1,11 +1,13 @@
 #lang racket/base
 
 (require db
+         db/util/postgresql
          gregor
          net/url
          racket/async-channel
          racket/contract
          racket/match
+         racket/set
          threading
          (prefix-in config: "../config.rkt")
          "database.rkt"
@@ -68,10 +70,7 @@
        (loop (hash))]
 
       [(list d pv)
-       (define k (make-grouping d pv))
-       (loop (~>> (hash-ref batch k 0)
-                  (add1)
-                  (hash-set batch k)))])))
+       (loop (batch-aggregate batch d pv))])))
 
 (define ((make-timer batcher))
   (let loop ()
@@ -80,33 +79,54 @@
     (!> batcher 'timeout)
     (loop)))
 
+(define (batch-aggregate batch d pv)
+  (define k (make-grouping d pv))
+  (~>> (hash-ref batch k (list (set) (set) 0))
+       (aggregate pv)
+       (hash-set batch k)))
+
+(define/match (aggregate pv agg)
+  [(_ (list visitors sessions visits))
+   (list (set-add visitors (page-visit-unique-id pv))
+         (set-add sessions (page-visit-session-id pv))
+         (add1 visits))])
+
 (define (upsert-batch! batcher batch)
   (with-handlers ([exn:fail? (lambda (e)
                                (log-batcher-error "failed to upsert: ~a" (exn-message e)))])
     (call-with-database-transaction (batcher-database batcher)
       (lambda (conn)
-        (for ([(grouping visits) (in-hash batch)])
-          (upsert-visits! conn grouping visits))))))
+        (for ([(grouping agg) (in-hash batch)])
+          (upsert-agg! conn grouping agg))))))
 
-(define (upsert-visits! conn grouping visits)
-  (query-exec conn UPSERT-BATCH-QUERY
-              (date->sql-date (grouping-date grouping))
-              (grouping-host grouping)
-              (grouping-path grouping)
-              (or (grouping-referrer-host grouping) "")
-              (or (grouping-referrer-path grouping) "")
-              (or (grouping-country grouping) "")
-              (or (grouping-os grouping) "")
-              (or (grouping-browser grouping) "")
-              visits))
+(define/match (upsert-agg! conn grouping agg)
+  [(_ _ (list visitors sessions visits))
+   (query-exec conn UPSERT-BATCH-QUERY
+               (date->sql-date (grouping-date grouping))
+               (grouping-host grouping)
+               (grouping-path grouping)
+               (or (grouping-referrer-host grouping) "")
+               (or (grouping-referrer-path grouping) "")
+               (or (grouping-country grouping) "")
+               (or (grouping-os grouping) "")
+               (or (grouping-browser grouping) "")
+               visits
+               (list->pg-array (set->list visitors))
+               (list->pg-array (set->list sessions)))])
 
 (define UPSERT-BATCH-QUERY
   #<<SQL
-insert into page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits)
-  values($1, $2, $3, $4, $5, $6, $7, $8, $9)
+with
+  visitors_agg as (select hll_add_agg(hll_hash_text(s.x)) as visitors from (select unnest($10::text[]) as x) as s),
+  sessions_agg as (select hll_add_agg(hll_hash_text(s.x)) as sessions from (select unnest($11::text[]) as x) as s)
+insert into page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits, visitors, sessions)
+  values($1, $2, $3, $4, $5, $6, $7, $8, $9, (select visitors from visitors_agg), (select sessions from sessions_agg))
 on conflict(date, host, path, referrer_host, referrer_path, country, os, browser)
 do update
-  set visits = page_visits.visits + $9
+  set
+    visits = page_visits.visits + $9,
+    visitors = page_visits.visitors || (select visitors from visitors_agg),
+    sessions = page_visits.sessions || (select sessions from sessions_agg)
   where
     page_visits.date = $1 and
     page_visits.host = $2 and
@@ -161,14 +181,14 @@ SQL
 
     (test-case "upserts visits"
       (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
-      (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
+      (enqueue (system-get test-system 'batcher) (page-visit "a" "c" (string->url "http://example.com/a") #f #f))
       (!> (system-get test-system 'batcher) 'timeout)
       (sleep 0.1) ;; force the current thread to yield
 
-      (check-eq?
+      (check-equal?
        (with-database-connection (conn (system-get test-system 'database))
-         (query-value conn "select visits from page_visits order by date desc limit 1"))
-       2)
+         (query-row conn "select visits, hll_cardinality(visitors), hll_cardinality(sessions) from page_visits order by date desc limit 1"))
+       #(2 1.0 2.0))
 
       (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
       (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
