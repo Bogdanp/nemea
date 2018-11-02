@@ -13,8 +13,10 @@
     "vue-template-compiler": "^2.5.17"
   },
   "dependencies": {
+    "apexcharts": "^2.1.9",
     "date-fns": "^1.29.0",
     "vue": "^2.5.17",
+    "vue-apexcharts": "^1.2.2",
     "vue-hot-reload-api": "^2.3.1",
     "vue-router": "^3.0.1"
   }

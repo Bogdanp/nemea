@@ -1,6 +1,8 @@
 import Vue from "vue";
+import VueApexCharts from "vue-apexcharts";
 import VueRouter from "vue-router";
 
+Vue.use(VueApexCharts);
 Vue.use(VueRouter);
 
 import App from "./App.vue";
