@@ -26,8 +26,8 @@
     </div>
 
     <div class="reports">
-      <top-pages :breakdown="report.breakdown"></top-pages>
-      <top-referrers :breakdown="report.breakdown"></top-referrers>
+      <top-pages :breakdown="report['pages-breakdown']"></top-pages>
+      <top-referrers :breakdown="report['referrers-breakdown']"></top-referrers>
     </div>
   </div>
 </template>
@@ -53,7 +53,8 @@
             visitors: 0,
             "avg-time": 0,
           },
-          breakdown: [],
+          ["pages-breakdown"]: [],
+          ["referrers-breakdown"]: [],
         },
       };
     },

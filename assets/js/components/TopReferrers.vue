@@ -16,6 +16,10 @@
           <td>{{ referrer.sessions }}</td>
           <td>{{ referrer.visitors }}</td>
         </tr>
+
+        <tr v-if="!referrers.length">
+          <td colspan="4"><em>No data for the current date range.</em></td>
+        </tr>
       </tbody>
     </table>
   </card>
@@ -34,14 +38,10 @@
     },
 
     computed: {
-      pages() {
-        return this.breakdown.map((data) => ({
-          uri: `http://${data["referrer-host"]}${data["referrer-path"]}`,
-          host: data["referrer-host"],
-          path: data["referrer-path"],
-          visits: data.visits,
-          visitors: data.visitors,
-          sessions: data.sessions,
+      referrers() {
+        return this.breakdown.map(({ host, path, visits, visitors, sessions }) => ({
+          host, path, visits, visitors, sessions,
+          uri: `http://${host}${path}`,
         })).sort((a, b) => b.visits - a.visits);
       }
     }

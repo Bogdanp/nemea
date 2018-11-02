@@ -16,6 +16,10 @@
           <td>{{ page.sessions }}</td>
           <td>{{ page.visitors }}</td>
         </tr>
+
+        <tr v-if="!pages.length">
+          <td colspan="4"><em>No data for the current date range.</em></td>
+        </tr>
       </tbody>
     </table>
   </card>
