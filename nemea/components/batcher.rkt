@@ -144,14 +144,11 @@ SQL
 
 (define (make-grouping d pv)
   (grouping d
-            (url-host (page-visit-location pv))
-            (url->path-string (page-visit-location pv))
-            (and~> (page-visit-referrer pv) (url-host))
-            (and~> (page-visit-referrer pv) (url->path-string))
+            (url->canonical-host (page-visit-location pv))
+            (url->canonical-path (page-visit-location pv))
+            (and~> (page-visit-referrer pv) (url->canonical-host))
+            (and~> (page-visit-referrer pv) (url->canonical-path))
             "" "" ""))
-
-(define (url->path-string url)
-  (path->string (url->path url)))
 
 
 (module+ test
