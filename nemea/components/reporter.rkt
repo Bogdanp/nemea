@@ -40,22 +40,40 @@
                'sessions (exact-floor sessions)
                'avg-time 0)]))
 
-  (define (get-breakdown conn)
-    (for/list ([(date host path referrer-host referrer-path visits visitors sessions)
-                (in-query conn (select date host path referrer_host referrer_path
+  (define (get-pages-breakdown conn)
+    (for/list ([(date host path visits visitors sessions)
+                (in-query conn (select date host path
                                        (coalesce (sum visits) 0)
                                        (hll_cardinality (hll_union_agg visitors))
                                        (hll_cardinality (hll_union_agg sessions))
                                        #:from page_visits
                                        #:where (and (>= date ,sql-start-date)
                                                     (< date ,sql-end-date))
-                                       #:group-by date host path referrer_host referrer_path))])
+                                       #:group-by date host path))])
 
       (hasheq 'date (~t (sql-date->moment date) "yyyy-MM-dd")
               'host host
               'path path
-              'referrer-host referrer-host
-              'referrer-path referrer-path
+              'visits visits
+              'visitors (exact-floor visitors)
+              'sessions (exact-floor sessions)
+              'avg-time 0)))
+
+  (define (get-referrers-breakdown conn)
+    (for/list ([(date referrer_host referrer_path visits visitors sessions)
+                (in-query conn (select date referrer_host referrer_path
+                                       (coalesce (sum visits) 0)
+                                       (hll_cardinality (hll_union_agg visitors))
+                                       (hll_cardinality (hll_union_agg sessions))
+                                       #:from page_visits
+                                       #:where (and (not (= referrer_host ""))
+                                                    (>= date ,sql-start-date)
+                                                    (< date ,sql-end-date))
+                                       #:group-by date referrer_host referrer_path))])
+
+      (hasheq 'date (~t (sql-date->moment date) "yyyy-MM-dd")
+              'host referrer_host
+              'path referrer_path
               'visits visits
               'visitors (exact-floor visitors)
               'sessions (exact-floor sessions)
@@ -65,7 +83,8 @@
     #:isolation 'repeatable-read
     (lambda (conn)
       (hasheq 'totals (get-totals conn)
-              'breakdown (get-breakdown conn)))))
+              'pages-breakdown (get-pages-breakdown conn)
+              'referrers-breakdown (get-referrers-breakdown conn)))))
 
 
 (module+ test
@@ -85,8 +104,6 @@
     (hasheq 'date date
             'host host
             'path path
-            'referrer-host ""
-            'referrer-path ""
             'visits visits
             'visitors 0
             'sessions 0
@@ -105,14 +122,14 @@
 insert into
   page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits)
 values
-  ('2018-08-20', 'example.com', '/', '', '', '', '', '', 10),
-  ('2018-08-20', 'example.com', '/a', '', '', '', '', '', 1),
-  ('2018-08-20', 'example.com', '/b', '', '', '', '', '', 2),
-  ('2018-08-21', 'example.com', '/a', '', '', '', '', '', 3),
-  ('2018-08-21', 'example.com', '/b', '', '', '', '', '', 5),
-  ('2018-08-23', 'example.com', '/a', '', '', '', '', '', 1),
-  ('2018-08-23', 'example.com', '/b', '', '', '', '', '', 2),
-  ('2018-08-24', 'example.com', '/', '', '', '', '', '', 1)
+  ('2018-08-20', 'example.com', '/',  'google.com', '/a', '', '', '', 10),
+  ('2018-08-20', 'example.com', '/a', '',           '',   '', '', '', 1),
+  ('2018-08-20', 'example.com', '/b', 'google.com', '/a', '', '', '', 2),
+  ('2018-08-21', 'example.com', '/a', '',           '',   '', '', '', 3),
+  ('2018-08-21', 'example.com', '/b', '',           '',   '', '', '', 5),
+  ('2018-08-23', 'example.com', '/a', '',           '',   '', '', '', 1),
+  ('2018-08-23', 'example.com', '/b', '',           '',   '', '', '', 2),
+  ('2018-08-24', 'example.com', '/',  '',           '',   '', '', '', 1)
 SQL
                     )))
 
@@ -125,10 +142,11 @@ SQL
         (date 2018 8 20)
         (date 2018 8 24))
        (hasheq 'totals (hasheq 'visits 24 'sessions 0 'visitors 0 'avg-time 0)
-               'breakdown (list (make-row "2018-08-20" "example.com" "/" 10)
-                                (make-row "2018-08-20" "example.com" "/a" 1)
-                                (make-row "2018-08-20" "example.com" "/b" 2)
-                                (make-row "2018-08-21" "example.com" "/a" 3)
-                                (make-row "2018-08-21" "example.com" "/b" 5)
-                                (make-row "2018-08-23" "example.com" "/a" 1)
-                                (make-row "2018-08-23" "example.com" "/b" 2))))))))
+               'pages-breakdown (list (make-row "2018-08-20" "example.com" "/" 10)
+                                      (make-row "2018-08-20" "example.com" "/a" 1)
+                                      (make-row "2018-08-20" "example.com" "/b" 2)
+                                      (make-row "2018-08-21" "example.com" "/a" 3)
+                                      (make-row "2018-08-21" "example.com" "/b" 5)
+                                      (make-row "2018-08-23" "example.com" "/a" 1)
+                                      (make-row "2018-08-23" "example.com" "/b" 2))
+               'referrers-breakdown (list (make-row "2018-08-20" "google.com" "/a" 12))))))))
