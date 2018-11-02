@@ -28,9 +28,9 @@
   (define sql-end-date (date->sql-date end-date))
 
   (define (get-totals conn)
-    (match (query-row conn (select (coalesce (sum visits) 0)
-                                   (hll_cardinality (hll_union_agg visitors))
-                                   (hll_cardinality (hll_union_agg sessions))
+    (match (query-row conn (select (as (coalesce (sum visits) 0) visits)
+                                   (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
+                                   (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
                                    #:from page_visits
                                    #:where (and (>= date ,sql-start-date)
                                                 (<  date ,sql-end-date))))
@@ -44,8 +44,8 @@
     (for/list ([(host path visits visitors sessions)
                 (in-query conn (select host path
                                        (as (coalesce (sum visits) 0) visits)
-                                       (as (hll_cardinality (hll_union_agg visitors)) visitors)
-                                       (as (hll_cardinality (hll_union_agg sessions)) sessions)
+                                       (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
+                                       (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
                                        #:from page_visits
                                        #:where (and (>= date ,sql-start-date)
                                                     (< date ,sql-end-date))
@@ -63,8 +63,8 @@
     (for/list ([(referrer_host referrer_path visits visitors sessions)
                 (in-query conn (select referrer_host referrer_path
                                        (as (coalesce (sum visits) 0) visits)
-                                       (as (hll_cardinality (hll_union_agg visitors)) visitors)
-                                       (as (hll_cardinality (hll_union_agg sessions)) sessions)
+                                       (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
+                                       (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
                                        #:from page_visits
                                        #:where (and (not (= referrer_host ""))
                                                     (>= date ,sql-start-date)
