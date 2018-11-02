@@ -99,10 +99,17 @@ core, pre {
     }
   }
 
-  td {
-    &:nth-child(n) {
+  tbody tr:last-child {
+    td {
       border-bottom: none;
-      border-radius: 0 0 4px 4px;
+
+      &:first-child {
+        border-radius: 0 0 0 4px;
+      }
+
+      &:last-child {
+        border-radius: 0 0 4px 0;
+      }
     }
   }
 }

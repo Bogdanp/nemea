@@ -42,7 +42,7 @@
         return this.breakdown.map(({ host, path, visits, visitors, sessions }) => ({
           host, path, visits, visitors, sessions,
           uri: `http://${host}${path}`,
-        })).sort((a, b) => b.visits - a.visits);
+        }));
       }
     }
   };
