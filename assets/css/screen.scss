@@ -15,6 +15,15 @@ body {
   font-size: 1rem;
 }
 
+a {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 h1, h2, h3, h4, h5, h6 {
   cursor: default;
   font-weight: 300;
@@ -59,6 +68,41 @@ core, pre {
     &:hover a,
     &--active a {
       color: $text;
+    }
+  }
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+
+  th {
+    cursor: default;
+    letter-spacing: 0.05rem;
+    color: $text-faded;
+    font-size: 0.8rem;
+    font-weight: 400;
+    text-transform: uppercase;
+  }
+
+  td, th {
+    border-bottom: 1px solid $shadow;
+    padding: 1rem;
+    text-align: right;
+    text-overflow: ellipsis;
+    width: 80px;
+    white-space: nowrap;
+
+    &:nth-child(1) {
+      width: auto;
+      text-align: left;
+    }
+  }
+
+  td {
+    &:nth-child(n) {
+      border-bottom: none;
+      border-radius: 0 0 4px 4px;
     }
   }
 }

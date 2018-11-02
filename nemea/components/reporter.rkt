@@ -41,18 +41,21 @@
                'avg-time 0)]))
 
   (define (get-breakdown conn)
-    (for/list ([(date host path referrer-host visits visitors sessions)
-                (in-query conn (select date host path referrer_host visits
-                                       (hll_cardinality visitors)
-                                       (hll_cardinality sessions)
+    (for/list ([(date host path referrer-host referrer-path visits visitors sessions)
+                (in-query conn (select date host path referrer_host referrer_path
+                                       (coalesce (sum visits) 0)
+                                       (hll_cardinality (hll_union_agg visitors))
+                                       (hll_cardinality (hll_union_agg sessions))
                                        #:from page_visits
                                        #:where (and (>= date ,sql-start-date)
-                                                    (< date ,sql-end-date))))])
+                                                    (< date ,sql-end-date))
+                                       #:group-by date host path referrer_host referrer_path))])
 
       (hasheq 'date (~t (sql-date->moment date) "yyyy-MM-dd")
               'host host
               'path path
               'referrer-host referrer-host
+              'referrer-path referrer-path
               'visits visits
               'visitors (exact-floor visitors)
               'sessions (exact-floor sessions)
@@ -78,6 +81,17 @@
                    (migrator [database] ,make-migrator)
                    (reporter [database] ,make-reporter))))
 
+  (define (make-row date host path visits)
+    (hasheq 'date date
+            'host host
+            'path path
+            'referrer-host ""
+            'referrer-path ""
+            'visits visits
+            'visitors 0
+            'sessions 0
+            'avg-time 0))
+
   (run-tests
    (test-suite
     "reporter"
@@ -89,7 +103,7 @@
         (query-exec conn "truncate page_visits")
         (query-exec conn #<<SQL
 insert into
-  page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits, visitors, sessions)
+  page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits)
 values
   ('2018-08-20', 'example.com', '/', '', '', '', '', '', 10),
   ('2018-08-20', 'example.com', '/a', '', '', '', '', '', 1),
@@ -111,10 +125,10 @@ SQL
         (date 2018 8 20)
         (date 2018 8 24))
        (hasheq 'totals (hasheq 'visits 24 'sessions 0 'visitors 0 'avg-time 0)
-               'breakdown (list (hasheq 'date "2018-08-20" 'host "example.com" 'path "/" 'referrer-host "" 'visits 10 'sessions 0 'visitors 0 'avg-time 0)
-                                (hasheq 'date "2018-08-20" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 1 'sessions 0 'visitors 0 'avg-time 0)
-                                (hasheq 'date "2018-08-20" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 2 'sessions 0 'visitors 0 'avg-time 0)
-                                (hasheq 'date "2018-08-21" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 3 'sessions 0 'visitors 0 'avg-time 0)
-                                (hasheq 'date "2018-08-21" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 5 'sessions 0 'visitors 0 'avg-time 0)
-                                (hasheq 'date "2018-08-23" 'host "example.com" 'path "/a" 'referrer-host "" 'visits 1 'sessions 0 'visitors 0 'avg-time 0)
-                                (hasheq 'date "2018-08-23" 'host "example.com" 'path "/b" 'referrer-host "" 'visits 2 'sessions 0 'visitors 0 'avg-time 0))))))))
+               'breakdown (list (make-row "2018-08-20" "example.com" "/" 10)
+                                (make-row "2018-08-20" "example.com" "/a" 1)
+                                (make-row "2018-08-20" "example.com" "/b" 2)
+                                (make-row "2018-08-21" "example.com" "/a" 3)
+                                (make-row "2018-08-21" "example.com" "/b" 5)
+                                (make-row "2018-08-23" "example.com" "/a" 1)
+                                (make-row "2018-08-23" "example.com" "/b" 2))))))))

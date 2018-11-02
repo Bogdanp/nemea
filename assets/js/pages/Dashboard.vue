@@ -26,11 +26,8 @@
     </div>
 
     <div class="reports">
-      <card title="Pages">
-      </card>
-
-      <card title="Referrers">
-      </card>
+      <top-pages :breakdown="report.breakdown"></top-pages>
+      <top-referrers :breakdown="report.breakdown"></top-referrers>
     </div>
   </div>
 </template>
@@ -38,12 +35,13 @@
 <script>
   import { getDailyReport} from "../lib/reporting.js";
 
-  import Card from "../components/Card.vue";
+  import TopPages from "../components/TopPages.vue";
+  import TopReferrers from "../components/TopReferrers.vue";
   import TotalsBox from "../components/TotalsBox.vue";
 
   export default {
     name: "Dashboard",
-    components: {Card, TotalsBox},
+    components: {TopPages, TopReferrers, TotalsBox},
 
     data() {
       return {
