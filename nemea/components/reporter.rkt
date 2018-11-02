@@ -41,18 +41,18 @@
                'avg-time 0)]))
 
   (define (get-pages-breakdown conn)
-    (for/list ([(date host path visits visitors sessions)
-                (in-query conn (select date host path
-                                       (coalesce (sum visits) 0)
-                                       (hll_cardinality (hll_union_agg visitors))
-                                       (hll_cardinality (hll_union_agg sessions))
+    (for/list ([(host path visits visitors sessions)
+                (in-query conn (select host path
+                                       (as (coalesce (sum visits) 0) visits)
+                                       (as (hll_cardinality (hll_union_agg visitors)) visitors)
+                                       (as (hll_cardinality (hll_union_agg sessions)) sessions)
                                        #:from page_visits
                                        #:where (and (>= date ,sql-start-date)
                                                     (< date ,sql-end-date))
-                                       #:group-by date host path))])
+                                       #:group-by host path
+                                       #:order-by visits #:desc))])
 
-      (hasheq 'date (~t (sql-date->moment date) "yyyy-MM-dd")
-              'host host
+      (hasheq 'host host
               'path path
               'visits visits
               'visitors (exact-floor visitors)
@@ -60,19 +60,19 @@
               'avg-time 0)))
 
   (define (get-referrers-breakdown conn)
-    (for/list ([(date referrer_host referrer_path visits visitors sessions)
-                (in-query conn (select date referrer_host referrer_path
-                                       (coalesce (sum visits) 0)
-                                       (hll_cardinality (hll_union_agg visitors))
-                                       (hll_cardinality (hll_union_agg sessions))
+    (for/list ([(referrer_host referrer_path visits visitors sessions)
+                (in-query conn (select referrer_host referrer_path
+                                       (as (coalesce (sum visits) 0) visits)
+                                       (as (hll_cardinality (hll_union_agg visitors)) visitors)
+                                       (as (hll_cardinality (hll_union_agg sessions)) sessions)
                                        #:from page_visits
                                        #:where (and (not (= referrer_host ""))
                                                     (>= date ,sql-start-date)
                                                     (< date ,sql-end-date))
-                                       #:group-by date referrer_host referrer_path))])
+                                       #:group-by referrer_host referrer_path
+                                       #:order-by visits #:desc))])
 
-      (hasheq 'date (~t (sql-date->moment date) "yyyy-MM-dd")
-              'host referrer_host
+      (hasheq 'host referrer_host
               'path referrer_path
               'visits visits
               'visitors (exact-floor visitors)
@@ -100,9 +100,8 @@
                    (migrator [database] ,make-migrator)
                    (reporter [database] ,make-reporter))))
 
-  (define (make-row date host path visits)
-    (hasheq 'date date
-            'host host
+  (define (make-row host path visits)
+    (hasheq 'host host
             'path path
             'visits visits
             'visitors 0
@@ -127,7 +126,7 @@ values
   ('2018-08-20', 'example.com', '/b', 'google.com', '/a', '', '', '', 2),
   ('2018-08-21', 'example.com', '/a', '',           '',   '', '', '', 3),
   ('2018-08-21', 'example.com', '/b', '',           '',   '', '', '', 5),
-  ('2018-08-23', 'example.com', '/a', '',           '',   '', '', '', 1),
+  ('2018-08-23', 'example.com', '/a', 'google.com', '/b', '', '', '', 1),
   ('2018-08-23', 'example.com', '/b', '',           '',   '', '', '', 2),
   ('2018-08-24', 'example.com', '/',  '',           '',   '', '', '', 1)
 SQL
@@ -142,11 +141,8 @@ SQL
         (date 2018 8 20)
         (date 2018 8 24))
        (hasheq 'totals (hasheq 'visits 24 'sessions 0 'visitors 0 'avg-time 0)
-               'pages-breakdown (list (make-row "2018-08-20" "example.com" "/" 10)
-                                      (make-row "2018-08-20" "example.com" "/a" 1)
-                                      (make-row "2018-08-20" "example.com" "/b" 2)
-                                      (make-row "2018-08-21" "example.com" "/a" 3)
-                                      (make-row "2018-08-21" "example.com" "/b" 5)
-                                      (make-row "2018-08-23" "example.com" "/a" 1)
-                                      (make-row "2018-08-23" "example.com" "/b" 2))
-               'referrers-breakdown (list (make-row "2018-08-20" "google.com" "/a" 12))))))))
+               'pages-breakdown (list (make-row "example.com" "/" 10)
+                                      (make-row "example.com" "/b" 9)
+                                      (make-row "example.com" "/a" 5))
+               'referrers-breakdown (list (make-row "google.com" "/a" 12)
+                                          (make-row "google.com" "/b" 1))))))))
