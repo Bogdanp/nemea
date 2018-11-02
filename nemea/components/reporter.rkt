@@ -40,6 +40,22 @@
                'sessions (exact-floor sessions)
                'avg-time 0)]))
 
+  (define (get-timeseries conn)
+    (for/list ([(date visits visitors sessions)
+                (in-query conn (select date
+                                       (as (coalesce (sum visits) 0) visits)
+                                       (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
+                                       (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
+                                       #:from page_visits
+                                       #:where (and (>= date ,sql-start-date)
+                                                    (<  date ,sql-end-date))
+                                       #:group-by date
+                                       #:order-by date #:asc))])
+      (hasheq 'date (~t (sql-date->moment date) "YYYY-MM-dd")
+              'visits visits
+              'visitors (exact-floor visitors)
+              'sessions (exact-floor sessions))))
+
   (define (get-pages-breakdown conn)
     (for/list ([(host path visits visitors sessions)
                 (in-query conn (select host path
@@ -48,7 +64,7 @@
                                        (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
                                        #:from page_visits
                                        #:where (and (>= date ,sql-start-date)
-                                                    (< date ,sql-end-date))
+                                                    (<  date ,sql-end-date))
                                        #:group-by host path
                                        #:order-by visits #:desc))])
 
@@ -68,7 +84,7 @@
                                        #:from page_visits
                                        #:where (and (not (= referrer_host ""))
                                                     (>= date ,sql-start-date)
-                                                    (< date ,sql-end-date))
+                                                    (<  date ,sql-end-date))
                                        #:group-by referrer_host referrer_path
                                        #:order-by visits #:desc))])
 
@@ -83,6 +99,7 @@
     #:isolation 'repeatable-read
     (lambda (conn)
       (hasheq 'totals (get-totals conn)
+              'timeseries (get-timeseries conn)
               'pages-breakdown (get-pages-breakdown conn)
               'referrers-breakdown (get-referrers-breakdown conn)))))
 
@@ -107,6 +124,12 @@
             'visitors 0
             'sessions 0
             'avg-time 0))
+
+  (define (make-timeseries date visits)
+    (hasheq 'date date
+            'visits visits
+            'visitors 0
+            'sessions 0))
 
   (run-tests
    (test-suite
@@ -141,6 +164,9 @@ SQL
         (date 2018 8 20)
         (date 2018 8 24))
        (hasheq 'totals (hasheq 'visits 24 'sessions 0 'visitors 0 'avg-time 0)
+               'timeseries (list (make-timeseries "2018-08-20" 13)
+                                 (make-timeseries "2018-08-21" 8)
+                                 (make-timeseries "2018-08-23" 3))
                'pages-breakdown (list (make-row "example.com" "/" 10)
                                       (make-row "example.com" "/b" 9)
                                       (make-row "example.com" "/a" 5))
