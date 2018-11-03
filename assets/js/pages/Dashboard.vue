@@ -15,11 +15,6 @@
                   :value="report.totals.visitors"
                   :active="currentReport == 'visitors'"
                   @activate="reportChanged"></totals-box>
-
-      <totals-box id="avg-time" label="Avg. Time on Site" formatter="duration"
-                  :value="report.totals['avg-time']"
-                  :active="currentReport == 'avg-time'"
-                  @activate="reportChanged"></totals-box>
     </div>
 
     <div class="charts">
@@ -257,12 +252,20 @@
       column-gap: 1rem;
       grid-template-columns: 1fr 1fr;
     }
+
+    .totals-box:nth-child(3) {
+      grid-column: 1 / 3;
+    }
   }
 
   @media (min-width: 1024px) {
     .totals {
       column-gap: 1rem;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .totals-box:nth-child(3) {
+      grid-column: auto;
     }
 
     .reports {
