@@ -82,7 +82,8 @@
                                        #:where (and (>= date ,sql-start-date)
                                                     (<  date ,sql-end-date))
                                        #:group-by host path
-                                       #:order-by visits #:desc))])
+                                       #:order-by visits #:desc
+                                       #:limit 30))])
 
       (hasheq 'host host
               'path path
@@ -102,7 +103,8 @@
                                                     (>= date ,sql-start-date)
                                                     (<  date ,sql-end-date))
                                        #:group-by referrer_host referrer_path
-                                       #:order-by visits #:desc))])
+                                       #:order-by visits #:desc
+                                       #:limit 30))])
 
       (hasheq 'host referrer_host
               'path referrer_path
