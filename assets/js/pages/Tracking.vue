@@ -10,7 +10,6 @@
   import TrackingCode from "../components/TrackingCode.vue";
 
   export default {
-    name: "Settings",
     components: {TrackingCode},
   };
 </script>

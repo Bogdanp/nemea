@@ -6,8 +6,8 @@
           <router-link to="/" tag="li" class="nav__item" active-class="nav__item--active" exact>
             <a>Dashboard</a>
           </router-link>
-          <router-link to="/settings" tag="li" class="nav__item" active-class="nav__item--active">
-            <a>Settings</a>
+          <router-link to="/tracking" tag="li" class="nav__item" active-class="nav__item--active">
+            <a>Tracking</a>
           </router-link>
         </ul>
       </div>
