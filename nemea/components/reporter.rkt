@@ -2,7 +2,9 @@
 
 (require db
          gregor
+         gregor/period
          racket/contract
+         racket/list
          racket/match
          racket/math
          sql
@@ -41,20 +43,34 @@
                'avg-time 0)]))
 
   (define (get-timeseries conn)
-    (for/list ([(date visits visitors sessions)
-                (in-query conn (select date
-                                       (as (coalesce (sum visits) 0) visits)
-                                       (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
-                                       (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
-                                       #:from page_visits
-                                       #:where (and (>= date ,sql-start-date)
-                                                    (<  date ,sql-end-date))
-                                       #:group-by date
-                                       #:order-by date #:asc))])
-      (hasheq 'date (~t (sql-date->moment date) "YYYY-MM-dd")
-              'visits visits
-              'visitors (exact-floor visitors)
-              'sessions (exact-floor sessions))))
+    (define days-in-range (period-ref (period-between start-date end-date '(days)) 'days))
+    (define start-date-string (~t start-date "YYYY-MM-dd"))
+    (define sql-start-date (date->sql-date (-days start-date days-in-range)))
+    (define sql-end-date (date->sql-date end-date))
+
+    (define timeseries
+      (for/list ([(date visits visitors sessions)
+                  (in-query conn (select date
+                                         (as (coalesce (sum visits) 0) visits)
+                                         (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
+                                         (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
+                                         #:from page_visits
+                                         #:where (and (>= date ,sql-start-date)
+                                                      (<  date ,sql-end-date))
+                                         #:group-by date
+                                         #:order-by date #:asc))])
+        (hasheq 'date (~t (sql-date->moment date) "YYYY-MM-dd")
+                'visits visits
+                'visitors (exact-floor visitors)
+                'sessions (exact-floor sessions))))
+
+    (define-values (previous-timeseries current-timeseries)
+      (partition (lambda (ts)
+                   (string<? (hash-ref ts 'date) start-date-string))
+                 timeseries))
+
+    (list previous-timeseries
+          current-timeseries))
 
   (define (get-pages-breakdown conn)
     (for/list ([(host path visits visitors sessions)
@@ -144,6 +160,8 @@
 insert into
   page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits)
 values
+  ('2018-08-15', 'example.com', '/',  '',           '',   '', '', '', 10),
+  ('2018-08-17', 'example.com', '/',  '',           '',   '', '', '', 8),
   ('2018-08-20', 'example.com', '/',  'google.com', '/a', '', '', '', 10),
   ('2018-08-20', 'example.com', '/a', '',           '',   '', '', '', 1),
   ('2018-08-20', 'example.com', '/b', 'google.com', '/a', '', '', '', 2),
@@ -164,9 +182,11 @@ SQL
         (date 2018 8 20)
         (date 2018 8 24))
        (hasheq 'totals (hasheq 'visits 24 'sessions 0 'visitors 0 'avg-time 0)
-               'timeseries (list (make-timeseries "2018-08-20" 13)
-                                 (make-timeseries "2018-08-21" 8)
-                                 (make-timeseries "2018-08-23" 3))
+               'timeseries (list
+                            (list (make-timeseries "2018-08-17" 8))
+                            (list (make-timeseries "2018-08-20" 13)
+                                  (make-timeseries "2018-08-21" 8)
+                                  (make-timeseries "2018-08-23" 3)))
                'pages-breakdown (list (make-row "example.com" "/" 10)
                                       (make-row "example.com" "/b" 9)
                                       (make-row "example.com" "/a" 5))
