@@ -2,8 +2,21 @@
 
 set -euo pipefail
 
+referrer_hosts=("" "google.com" "yahoo.com" "producthunt.com" "reddit.com")
+referrer_paths=("" "/search" "/" "/posts/nemea" "/r/analytics")
+
+scale=1
+
 echo 'truncate page_visits' | psql -Unemea -dnemea
-psql -Unemea -dnemea <<EOF
+for p in "/" "/login" "/signup" "/data" "/pricing" "/privacy" "/terms"
+do
+    scale=$((scale * 3))
+
+    for i in "${!referrer_hosts[@]}"
+    do
+        host=${referrer_hosts[$i]}
+        path=${referrer_paths[$i]}
+        psql -Unemea -dnemea <<EOF
 with
   range as (select date_trunc('day', d) as d from generate_series(now() - '365 days'::interval, now(), '1 day'::interval) d)
 insert into
@@ -11,12 +24,14 @@ insert into
 select
   r.d as date,
   'example.com' as host,
-  '/' as path,
-  '' as referrer_host,
-  '' as referrer_path,
-  300 + random() * 10000 as visits
+  '$p' as path,
+  '$host' as referrer_host,
+  '$path' as referrer_path,
+  (300 + random() * 100000) / $scale as visits
 from range r
 EOF
+    done
+done
 
 for i in $(seq 0 365)
 do
