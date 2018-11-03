@@ -2,6 +2,7 @@
 
 Take control of your website analytics!
 
+![screenshot](assets/img/screenshot.png)
 
 ## Developing
 
