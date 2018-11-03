@@ -107,9 +107,6 @@
                (grouping-path grouping)
                (or (grouping-referrer-host grouping) "")
                (or (grouping-referrer-path grouping) "")
-               (or (grouping-country grouping) "")
-               (or (grouping-os grouping) "")
-               (or (grouping-browser grouping) "")
                visits
                (list->pg-array (set->list visitors))
                (list->pg-array (set->list sessions)))])
@@ -117,14 +114,14 @@
 (define UPSERT-BATCH-QUERY
   #<<SQL
 with
-  visitors_agg as (select hll_add_agg(hll_hash_text(s.x)) as visitors from (select unnest($10::text[]) as x) as s),
-  sessions_agg as (select hll_add_agg(hll_hash_text(s.x)) as sessions from (select unnest($11::text[]) as x) as s)
-insert into page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits, visitors, sessions)
-  values($1, $2, $3, $4, $5, $6, $7, $8, $9, (select visitors from visitors_agg), (select sessions from sessions_agg))
-on conflict(date, host, path, referrer_host, referrer_path, country, os, browser)
+  visitors_agg as (select hll_add_agg(hll_hash_text(s.x)) as visitors from (select unnest($7::text[]) as x) as s),
+  sessions_agg as (select hll_add_agg(hll_hash_text(s.x)) as sessions from (select unnest($8::text[]) as x) as s)
+insert into page_visits(date, host, path, referrer_host, referrer_path, visits, visitors, sessions)
+  values($1, $2, $3, $4, $5, $6, (select visitors from visitors_agg), (select sessions from sessions_agg))
+on conflict(date, host, path, referrer_host, referrer_path)
 do update
   set
-    visits = page_visits.visits + $9,
+    visits = page_visits.visits + $6,
     visitors = page_visits.visitors || (select visitors from visitors_agg),
     sessions = page_visits.sessions || (select sessions from sessions_agg)
   where
@@ -132,14 +129,11 @@ do update
     page_visits.host = $2 and
     page_visits.path = $3 and
     page_visits.referrer_host = $4 and
-    page_visits.referrer_path = $5 and
-    page_visits.country = $6 and
-    page_visits.os = $7 and
-    page_visits.browser = $8
+    page_visits.referrer_path = $5
 SQL
   )
 
-(struct grouping (date host path referrer-host referrer-path country os browser)
+(struct grouping (date host path referrer-host referrer-path)
   #:transparent)
 
 (define (make-grouping d pv)
@@ -147,8 +141,7 @@ SQL
             (url->canonical-host (page-visit-location pv))
             (url->canonical-path (page-visit-location pv))
             (and~> (page-visit-referrer pv) (url->canonical-host))
-            (and~> (page-visit-referrer pv) (url->canonical-path))
-            "" "" ""))
+            (and~> (page-visit-referrer pv) (url->canonical-path))))
 
 
 (module+ test

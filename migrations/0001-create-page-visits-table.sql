@@ -4,13 +4,10 @@ create table page_visits (
   path text not null,
   referrer_host text not null,
   referrer_path text not null,
-  country text not null,
-  os text not null,
-  browser text not null,
 
   visits bigint not null,
   visitors hll not null default hll_empty(),
   sessions hll not null default hll_empty(),
 
-  unique(date, host, path, referrer_host, referrer_path, country, os, browser)
+  unique(date, host, path, referrer_host, referrer_path)
 );

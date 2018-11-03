@@ -7,16 +7,13 @@ psql -Unemea -dnemea <<EOF
 with
   range as (select date_trunc('day', d) as d from generate_series(now() - '14 days'::interval, now(), '1 day'::interval) d)
 insert into
-  page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits)
+  page_visits(date, host, path, referrer_host, referrer_path, visits)
 select
   r.d as date,
   'example.com' as host,
   '/' as path,
   '' as referrer_host,
   '' as referrer_path,
-  '' as country,
-  '' as os,
-  '' as browser,
   300 + random() * 10000 as visits
 from range r
 EOF

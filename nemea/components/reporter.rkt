@@ -160,18 +160,18 @@
         (query-exec conn "truncate page_visits")
         (query-exec conn #<<SQL
 insert into
-  page_visits(date, host, path, referrer_host, referrer_path, country, os, browser, visits)
+  page_visits(date, host, path, referrer_host, referrer_path, visits)
 values
-  ('2018-08-15', 'example.com', '/',  '',           '',   '', '', '', 10),
-  ('2018-08-17', 'example.com', '/',  '',           '',   '', '', '', 8),
-  ('2018-08-20', 'example.com', '/',  'google.com', '/a', '', '', '', 10),
-  ('2018-08-20', 'example.com', '/a', '',           '',   '', '', '', 1),
-  ('2018-08-20', 'example.com', '/b', 'google.com', '/a', '', '', '', 2),
-  ('2018-08-21', 'example.com', '/a', '',           '',   '', '', '', 3),
-  ('2018-08-21', 'example.com', '/b', '',           '',   '', '', '', 5),
-  ('2018-08-23', 'example.com', '/a', 'google.com', '/b', '', '', '', 1),
-  ('2018-08-23', 'example.com', '/b', '',           '',   '', '', '', 2),
-  ('2018-08-24', 'example.com', '/',  '',           '',   '', '', '', 1)
+  ('2018-08-15', 'example.com', '/',  '',           '',   10),
+  ('2018-08-17', 'example.com', '/',  '',           '',   8),
+  ('2018-08-20', 'example.com', '/',  'google.com', '/a', 10),
+  ('2018-08-20', 'example.com', '/a', '',           '',   1),
+  ('2018-08-20', 'example.com', '/b', 'google.com', '/a', 2),
+  ('2018-08-21', 'example.com', '/a', '',           '',   3),
+  ('2018-08-21', 'example.com', '/b', '',           '',   5),
+  ('2018-08-23', 'example.com', '/a', 'google.com', '/b', 1),
+  ('2018-08-23', 'example.com', '/b', '',           '',   2),
+  ('2018-08-24', 'example.com', '/',  '',           '',   1)
 SQL
                     )))
 
