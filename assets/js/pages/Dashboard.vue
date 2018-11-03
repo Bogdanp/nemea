@@ -24,7 +24,7 @@
 
     <div class="charts">
       <card :no-padding="true">
-        <chart type="area" :height="300" :options="chartOptions" :series="series"></chart>
+        <chart type="area" :height="chartHeight" :options="chartOptions" :series="series"></chart>
       </card>
     </div>
 
@@ -93,7 +93,17 @@
 
     computed: {
       chartOptions() {
-        return makeTimeseriesOptions();
+        const options = makeTimeseriesOptions();
+        options.chart.sparkline = { enabled: true };
+        options.grid.padding.top = 0;
+        options.grid.padding.left = 0;
+        options.grid.padding.right = 0;
+
+        return options;
+      },
+
+      chartHeight() {
+        return window.innerWidth < 720 ? 220 : 300;
       },
 
       series() {
@@ -130,7 +140,7 @@
     methods: {
       reportChanged(id) {
         this.currentReport = id;
-      }
+      },
     },
   };
 </script>
@@ -147,6 +157,10 @@
     display: grid;
     row-gap: 1rem;
     padding: 1rem;
+  }
+
+  .apexcharts-svg {
+    border-radius: 4px;
   }
 
   @media (min-width: 640px) {
