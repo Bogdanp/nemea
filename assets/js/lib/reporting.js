@@ -1,12 +1,8 @@
-import format from "date-fns/format";
 import startOfDay from "date-fns/start_of_day";
 import startOfTomorrow from "date-fns/start_of_tomorrow";
 
+import { formatDate } from "./dates.js";
 import request from "./client.js";
-
-function formatDate(date) {
-  return format(date, "YYYY-MM-DD");
-}
 
 export function getDailyReport(startDate, endDate) {
   startDate = startDate || startOfDay(new Date());

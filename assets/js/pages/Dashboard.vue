@@ -49,7 +49,7 @@
 
 <script>
   import { capitalize } from "../lib/strings.js";
-  import { datesInRange, makeContinuous } from "../lib/dates.js";
+  import { datesInRange, formatDate, makeContinuous } from "../lib/dates.js";
   import { getDailyReport} from "../lib/reporting.js";
   import { makeTimeseriesOptions } from "../lib/charts.js";
 
@@ -67,7 +67,7 @@
   import startOfToday from "date-fns/start_of_today";
   import startOfYesterday from "date-fns/start_of_today";
 
-  const BAR_CHART_CUTOFF = 30;
+  const BAR_CHART_CUTOFF = 14;
 
   const DATE_PRESETS = {
     "today": () => [startOfToday(), startOfTomorrow()],
@@ -145,8 +145,20 @@
 
         if (this.chartType === "bar") {
           options.fill.opacity = 1;
+          options.tooltip = {
+            x: {
+              formatter: formatDate
+            }
+          };
         } else {
           options.fill.opacity = [0.2, 0];
+          options.tooltip = {
+            x: {
+              formatter: (date) => {
+                return `${formatDate(date)} vs ${formatDate(subDays(date, this.daysInRange))}`;
+              }
+            }
+          };
         }
 
         return options;

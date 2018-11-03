@@ -1,6 +1,11 @@
 import addDays from "date-fns/add_days";
 import compareAsc from "date-fns/compare_asc";
+import format from "date-fns/format";
 import startOfDay from "date-fns/start_of_day";
+
+export function formatDate(date) {
+  return format(date, "YYYY-MM-DD");
+}
 
 export function datesInRange(lo, hi) {
   let range = [];
