@@ -26,6 +26,8 @@
 </template>
 
 <script>
+  import { numeric } from "../lib/formatting.js";
+
   import Card from "./Card.vue";
 
   export default {
@@ -40,8 +42,11 @@
     computed: {
       pages() {
         return this.breakdown.map(({ host, path, visits, visitors, sessions }) => ({
-          host, path, visits, visitors, sessions,
+          host, path,
           uri: `http://${host}${path}`,
+          visits: numeric(visits),
+          visitors: numeric(visitors),
+          sessions: numeric(sessions),
         }));
       }
     }

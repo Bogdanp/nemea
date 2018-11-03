@@ -50,6 +50,7 @@
 <script>
   import { capitalize } from "../lib/strings.js";
   import { datesInRange, formatDate, makeContinuous } from "../lib/dates.js";
+  import { numeric } from "../lib/formatting.js";
   import { getDailyReport} from "../lib/reporting.js";
   import { makeTimeseriesOptions } from "../lib/charts.js";
 
@@ -147,8 +148,11 @@
           options.fill.opacity = 1;
           options.tooltip = {
             x: {
-              formatter: formatDate
-            }
+              formatter: formatDate,
+            },
+            y: {
+              formatter: numeric,
+            },
           };
         } else {
           options.fill.opacity = [0.2, 0];
@@ -156,8 +160,11 @@
             x: {
               formatter: (date) => {
                 return `${formatDate(date)} vs ${formatDate(subDays(date, this.daysInRange))}`;
-              }
-            }
+              },
+            },
+            y: {
+              formatter: numeric,
+            },
           };
         }
 

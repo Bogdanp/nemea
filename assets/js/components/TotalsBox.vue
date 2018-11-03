@@ -8,20 +8,9 @@
 </template>
 
 <script>
-  const NUMBER_FORMATTER = new Intl.NumberFormat();
+  import { duration, numeric } from "../lib/formatting.js";
 
-  const FORMATTERS = {
-    duration(value) {
-      const minutes = Math.floor(value / 60);
-      const seconds = value % 60;
-
-      return minutes ? `${minutes}m ${seconds}s` : `${seconds}s`;
-    },
-
-    numeric(value) {
-      return NUMBER_FORMATTER.format(value);
-    }
-  };
+  const FORMATTERS = { duration, numeric };
 
   export default {
     props: {

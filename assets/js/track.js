@@ -1,4 +1,6 @@
 (function() {
+  "use strict";
+
   var SESSION_ID_COOKIE = "_nsid";
   var SESSION_ID_COOKIE_MAX_AGE = 1800;
   var UNIQUE_ID_COOKIE = "_nuid";
