@@ -7,7 +7,7 @@ log() {
 }
 
 log "Cleaning static/ dir."
-rm static/*
+rm -f static/*
 
 log "Building UI..."
 npx parcel build -d static assets/index.html
