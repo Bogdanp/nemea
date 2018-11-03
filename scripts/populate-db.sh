@@ -5,7 +5,7 @@ set -euo pipefail
 echo 'truncate page_visits' | psql -Unemea -dnemea
 psql -Unemea -dnemea <<EOF
 with
-  range as (select date_trunc('day', d) as d from generate_series(now() - '14 days'::interval, now(), '1 day'::interval) d)
+  range as (select date_trunc('day', d) as d from generate_series(now() - '365 days'::interval, now(), '1 day'::interval) d)
 insert into
   page_visits(date, host, path, referrer_host, referrer_path, visits)
 select
@@ -18,7 +18,7 @@ select
 from range r
 EOF
 
-for i in $(seq 0 14)
+for i in $(seq 0 365)
 do
     date=$(date -v-"${i}d" +%Y-%m-%d)
     psql -Unemea -dnemea <<EOF

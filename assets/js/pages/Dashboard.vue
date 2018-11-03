@@ -24,7 +24,19 @@
 
     <div class="charts">
       <card :no-padding="true">
-        <chart type="area" :height="chartHeight" :options="chartOptions" :series="series"></chart>
+        <template slot="header">
+          <select :value="preset" @change="rangeChanged">
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last-7">Last 7 Days</option>
+            <option value="last-14">Last 14 Days</option>
+            <option value="last-30">Last 30 Days</option>
+            <option value="last-90">Last 90 Days</option>
+            <option value="this-year">This Year</option>
+          </select>
+        </template>
+
+        <chart v-if="chartVisible" :type="chartType" :height="chartHeight" :options="chartOptions" :series="series"></chart>
       </card>
     </div>
 
@@ -46,13 +58,26 @@
   import TopReferrers from "../components/TopReferrers.vue";
   import TotalsBox from "../components/TotalsBox.vue";
 
+  import VueApexCharts from "vue-apexcharts";
   import addDays from "date-fns/add_days";
   import differenceInDays from "date-fns/difference_in_days";
   import subDays from "date-fns/sub_days";
   import startOfDay from "date-fns/start_of_day";
   import startOfTomorrow from "date-fns/start_of_tomorrow";
   import startOfToday from "date-fns/start_of_today";
-  import VueApexCharts from "vue-apexcharts";
+  import startOfYesterday from "date-fns/start_of_today";
+
+  const BAR_CHART_CUTOFF = 30;
+
+  const DATE_PRESETS = {
+    "today": () => [startOfToday(), startOfTomorrow()],
+    "yesterday": () => [subDays(startOfToday(), 1), startOfToday()],
+    "last-7": () => [subDays(startOfToday(), 6), startOfTomorrow()],
+    "last-14": () => [subDays(startOfToday(), 13), startOfTomorrow()],
+    "last-30": () => [subDays(startOfToday(), 29), startOfTomorrow()],
+    "last-90": () => [subDays(startOfToday(), 89), startOfTomorrow()],
+    "this-year": () => [subDays(startOfToday(), 364), startOfTomorrow()],
+  };
 
   export default {
     name: "Dashboard",
@@ -68,8 +93,7 @@
     data() {
       return {
         currentReport: "visits",
-        startDate: subDays(startOfToday(), 6),
-        endDate: startOfTomorrow(),
+        preset: "last-7",
         report: {
           totals: {
             visits: 0,
@@ -92,6 +116,26 @@
     },
 
     computed: {
+      dateRange() {
+        return DATE_PRESETS[this.preset]();
+      },
+
+      startDate() {
+        return this.dateRange[0];
+      },
+
+      endDate() {
+        return this.dateRange[1];
+      },
+
+      daysInRange() {
+        return differenceInDays(this.endDate, this.startDate);
+      },
+
+      chartHeight() {
+        return window.innerWidth < 720 ? 220 : 300;
+      },
+
       chartOptions() {
         const options = makeTimeseriesOptions();
         options.chart.sparkline = { enabled: true };
@@ -99,21 +143,29 @@
         options.grid.padding.left = 0;
         options.grid.padding.right = 0;
 
+        if (this.chartType === "bar") {
+          options.fill.opacity = 1;
+        } else {
+          options.fill.opacity = [0.2, 0];
+        }
+
         return options;
       },
 
-      chartHeight() {
-        return window.innerWidth < 720 ? 220 : 300;
+      chartType() {
+        return this.daysInRange > BAR_CHART_CUTOFF ? "bar" : "area";
+      },
+
+      chartVisible() {
+        return this.daysInRange > 1;
       },
 
       series() {
-        const delta = differenceInDays(this.endDate, this.startDate);
-
         const previousTimeseries = makeContinuous(
           this.startDate,
           this.endDate,
           this.report.timeseries[0].map(data => ({
-            date: addDays(new Date(data.date), delta),
+            date: addDays(new Date(data.date), this.daysInRange),
             value: data[this.currentReport],
           }))
         );
@@ -127,17 +179,35 @@
           }))
         );
 
-        return [{
-          name: capitalize(this.currentReport),
-          data: currentTimeseries,
-        }, {
-          name: "Previously",
-          data: previousTimeseries,
-        }];
+        if (this.chartType === "bar") {
+          return [{
+            name: capitalize(this.currentReport),
+            data: currentTimeseries,
+          }];
+        } else {
+          return [{
+            name: capitalize(this.currentReport),
+            data: currentTimeseries,
+          }, {
+            name: "Previously",
+            data: previousTimeseries,
+          }];
+        }
       },
     },
 
     methods: {
+      rangeChanged(e) {
+        const preset = e.target.value;
+        const [lo, hi] = DATE_PRESETS[preset]();
+
+        getDailyReport(lo, hi)
+          .then(report => {
+            this.preset = preset;
+            this.report = report;
+          });
+      },
+
       reportChanged(id) {
         this.currentReport = id;
       },
