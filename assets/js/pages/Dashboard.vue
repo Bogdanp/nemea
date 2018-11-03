@@ -23,6 +23,9 @@
     </div>
 
     <div class="charts">
+      <card :no-padding="true">
+        <chart type="area" :height="300" :options="chartOptions" :series="series"></chart>
+      </card>
     </div>
 
     <div class="reports">
@@ -33,19 +36,40 @@
 </template>
 
 <script>
+  import { capitalize } from "../lib/strings.js";
+  import { datesInRange, makeContinuous } from "../lib/dates.js";
   import { getDailyReport} from "../lib/reporting.js";
+  import { makeTimeseriesOptions } from "../lib/charts.js";
 
+  import Card from "../components/Card.vue";
   import TopPages from "../components/TopPages.vue";
   import TopReferrers from "../components/TopReferrers.vue";
   import TotalsBox from "../components/TotalsBox.vue";
 
+  import addDays from "date-fns/add_days";
+  import differenceInDays from "date-fns/difference_in_days";
+  import subDays from "date-fns/sub_days";
+  import startOfDay from "date-fns/start_of_day";
+  import startOfTomorrow from "date-fns/start_of_tomorrow";
+  import startOfToday from "date-fns/start_of_today";
+  import VueApexCharts from "vue-apexcharts";
+
   export default {
     name: "Dashboard",
-    components: {TopPages, TopReferrers, TotalsBox},
+    components: {
+      Card,
+      TopPages,
+      TopReferrers,
+      TotalsBox,
+
+      chart: VueApexCharts,
+    },
 
     data() {
       return {
         currentReport: "visits",
+        startDate: subDays(startOfToday(), 6),
+        endDate: startOfTomorrow(),
         report: {
           totals: {
             visits: 0,
@@ -53,6 +77,7 @@
             visitors: 0,
             "avg-time": 0,
           },
+          timeseries: [[], []],
           ["pages-breakdown"]: [],
           ["referrers-breakdown"]: [],
         },
@@ -60,10 +85,46 @@
     },
 
     created() {
-      getDailyReport()
+      getDailyReport(this.startDate, this.endDate)
         .then(report => {
           this.report = report;
         });
+    },
+
+    computed: {
+      chartOptions() {
+        return makeTimeseriesOptions();
+      },
+
+      series() {
+        const delta = differenceInDays(this.endDate, this.startDate);
+
+        const previousTimeseries = makeContinuous(
+          this.startDate,
+          this.endDate,
+          this.report.timeseries[0].map(data => ({
+            date: addDays(new Date(data.date), delta),
+            value: data[this.currentReport],
+          }))
+        );
+
+        const currentTimeseries = makeContinuous(
+          this.startDate,
+          this.endDate,
+          this.report.timeseries[1].map(data => ({
+            date: new Date(data.date),
+            value: data[this.currentReport],
+          }))
+        );
+
+        return [{
+          name: capitalize(this.currentReport),
+          data: currentTimeseries,
+        }, {
+          name: "Previously",
+          data: previousTimeseries,
+        }];
+      },
     },
 
     methods: {
@@ -81,6 +142,7 @@
     padding: 1rem;
   }
 
+  .charts,
   .reports {
     display: grid;
     row-gap: 1rem;
