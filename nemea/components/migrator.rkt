@@ -38,7 +38,9 @@
     (lambda (p)
       (string-suffix? (path->string p) ".sql"))
     (normalize-path (build-path parent-path 'up 'up "migrations")))
-   string-ci<?))
+   (lambda (a b)
+     (string-ci<? (path->string a)
+                  (path->string b)))))
 
 (define (migrate-one! conn ref migration-path)
   (log-migrator-info "performing migration ~s" ref)
