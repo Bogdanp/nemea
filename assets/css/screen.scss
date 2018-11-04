@@ -76,11 +76,16 @@ code, pre {
   border-collapse: collapse;
   width: 100%;
 
+  td {
+    font-size: 0.8rem;
+    font-weight: 400;
+  }
+
   th {
     cursor: default;
     letter-spacing: 0.05rem;
     color: $text-faded;
-    font-size: 0.8rem;
+    font-size: 0.6rem;
     font-weight: 400;
     text-transform: uppercase;
   }
