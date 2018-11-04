@@ -47,7 +47,7 @@ Set up the databases:
 
 ## License
 
-    dramatiq is licensed under the GPL. Please see COPYING for details.
+    nemea is licensed under the GPL. Please see COPYING for details.
 
 
 [Racket]: https://racket-lang.org
