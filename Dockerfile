@@ -22,5 +22,6 @@ WORKDIR /opt/nemea
 COPY --from=asset_compression /opt/nemea/static /opt/nemea/static
 RUN raco pkg install --auto nemea/
 RUN raco setup -D --tidy --check-pkg-deps --unused-pkg-deps --pkgs nemea
+EXPOSE 8000
 
 CMD ["racket", "-l", "nemea"]
