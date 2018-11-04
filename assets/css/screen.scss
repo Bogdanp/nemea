@@ -10,7 +10,7 @@
 body {
   background: #fefefe;
   color: $text;
-  font: 62.5%/1.4 "Monterrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font: 62.5%/1.4 "Montserrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-kerning: normal;
   font-size: 1rem;
 }
@@ -31,7 +31,7 @@ h1, h2, h3, h4, h5, h6 {
   text-transform: uppercase;
 }
 
-core, pre {
+code, pre {
   overflow: scroll;
   font-family: "Fira Mono", "Operator Mono", "Inconsolata", monospace;
   font-size: 0.8rem;
