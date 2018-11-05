@@ -21,7 +21,7 @@
 
   nemea("view");
 &lt;/script>
-  `.trim().replace(/</g, "&lt;");
+  `.trim();
 
   export default {
     components: {Card},
