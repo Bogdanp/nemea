@@ -31,13 +31,15 @@
   (-> database? migrator?)
   (migrator database))
 
-(define-runtime-path parent-path ".")
+(define-runtime-path migrations-path
+  (build-path 'up 'up "migrations"))
+
 (define migration-paths
   (sort
    (find-files
     (lambda (p)
       (string-suffix? (path->string p) ".sql"))
-    (normalize-path (build-path parent-path 'up 'up "migrations")))
+    (normalize-path migrations-path))
    (lambda (a b)
      (string-ci<? (path->string a)
                   (path->string b)))))

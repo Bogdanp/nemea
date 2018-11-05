@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require racket/contract
+(require (for-syntax racket)
+         racket/contract
          racket/runtime-path
          threading
          web-server/dispatch
@@ -23,9 +24,8 @@
           [struct app ((dispatcher dispatcher/c))]
           [make-app (-> database? batcher? reporter? app?)]))
 
-(define-runtime-path parent-path ".")
-(define static-path
-  (build-path parent-path 'up 'up "static"))
+(define-runtime-path static-path
+  (build-path 'up 'up "static"))
 
 (struct app (dispatcher)
   #:methods gen:component
