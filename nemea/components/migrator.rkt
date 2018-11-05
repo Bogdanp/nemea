@@ -51,7 +51,7 @@
   (with-database-connection (conn (migrator-database migrator))
     (query-exec conn "create table if not exists migrations(ref text not null unique)")
     (define latest-ref
-      (or (query-maybe-value conn "select ref from migrations") ""))
+      (or (query-maybe-value conn "select ref from migrations order by ref desc limit 1") ""))
 
     (log-migrator-info "performing migrations")
     (for ([migration-path migration-paths])
