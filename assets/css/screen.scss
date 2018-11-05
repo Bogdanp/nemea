@@ -74,9 +74,11 @@ code, pre {
 
 .table {
   border-collapse: collapse;
+  table-layout: fixed;
   width: 100%;
 
   td {
+    overflow: hidden;
     font-size: 0.8rem;
     font-weight: 400;
   }
