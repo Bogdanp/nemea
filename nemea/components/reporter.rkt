@@ -25,7 +25,10 @@
 (define (make-reporter database)
   (reporter database))
 
-(define (make-daily-report reporter start-date end-date)
+(define (make-daily-report reporter start-date end-date
+                           #:top-pages-limit [top-pages-limit 10]
+                           #:top-referrers-limit [top-referrers-limit 10])
+
   (define sql-start-date (date->sql-date start-date))
   (define sql-end-date (date->sql-date end-date))
 
@@ -83,7 +86,7 @@
                                                     (<  date ,sql-end-date))
                                        #:group-by host path
                                        #:order-by visits #:desc
-                                       #:limit 30))])
+                                       #:limit ,top-pages-limit))])
 
       (hasheq 'host host
               'path path
@@ -104,7 +107,7 @@
                                                     (<  date ,sql-end-date))
                                        #:group-by referrer_host referrer_path
                                        #:order-by visits #:desc
-                                       #:limit 30))])
+                                       #:limit ,top-referrers-limit))])
 
       (hasheq 'host referrer_host
               'path referrer_path
