@@ -40,7 +40,7 @@
     background: $background;
     border: 1px solid $shadow;
     border-radius: 4px;
-    box-shadow: 0 3px 5px $shadow;
+    box-shadow: 0 5px 25px $shadow, 0 3px 5px $shadow;
 
     &__header {
       border-bottom: 1px solid $shadow-darker;

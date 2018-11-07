@@ -55,7 +55,7 @@
     padding: 1rem 1.5rem;
     background: $background-highlight-gradient;
     border-radius: 4px;
-    box-shadow: 0 2px 5px $shadow-highlight;
+    box-shadow: 0 2px 25px $shadow-highlight, 0 2px 5px $shadow-highlight;
     color: $text-highlight;
     font-size: 1.4rem;
     opacity: 0.5;
