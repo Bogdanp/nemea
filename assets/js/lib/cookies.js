@@ -11,3 +11,7 @@ export function parseCookies() {
 
   return cookies;
 }
+
+export function deleteCookie(name) {
+  document.cookie = `${name}=0; max-age=0`;
+}

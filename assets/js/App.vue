@@ -24,9 +24,23 @@
 </template>
 
 <script>
-  import { parseCookies } from "./lib/cookies.js";
+  import { deleteCookie, parseCookies } from "./lib/cookies.js";
+
+  const ONBOARDING_COOKIE = "onboarding";
 
   export default {
+    created() {
+      const cookies = parseCookies();
+
+      if (cookies[ONBOARDING_COOKIE]) {
+        try {
+          this.$router.push({ path: "/setup" });
+        } finally {
+          deleteCookie(ONBOARDING_COOKIE);
+        }
+      }
+    },
+
     data() {
       const cookies = parseCookies();
 
