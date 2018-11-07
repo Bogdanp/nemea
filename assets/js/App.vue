@@ -6,8 +6,8 @@
           <router-link to="/" tag="li" class="nav__item" active-class="nav__item--active" exact>
             <a>Dashboard</a>
           </router-link>
-          <router-link to="/tracking" tag="li" class="nav__item" active-class="nav__item--active">
-            <a>Tracking</a>
+          <router-link to="/setup" tag="li" class="nav__item" active-class="nav__item--active">
+            <a>Setup</a>
           </router-link>
 
           <li class="nav__item" v-if="returnURL" style="float: right;">

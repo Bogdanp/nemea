@@ -7,11 +7,11 @@ Vue.use(VueRouter);
 
 import App from "./App.vue";
 import Dashboard from "./pages/Dashboard.vue";
-import Tracking from "./pages/Tracking.vue";
+import Setup from "./pages/Setup.vue";
 
 const routes = [
   { path: "/", component: Dashboard },
-  { path: "/tracking", component: Tracking }
+  { path: "/setup", component: Setup }
 ];
 const router = new VueRouter({ routes });
 const app = new Vue({ render: h => h(App), router });

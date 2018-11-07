@@ -1,8 +1,8 @@
 <template>
-  <card title="Tracking Code" :no-padding="true">
+  <card title="Getting Started" :no-padding="true">
     <p>
-      Embed this script at the end of the <code>body</code> of every
-      page on your website so you can start collecting data.
+      Embed this script inside <code>body</code> of every page on your
+      website to start collecting data.
     </p>
     <pre v-html="script"></pre>
   </card>
