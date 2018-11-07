@@ -2,6 +2,11 @@
 
 (require gregor
          net/url
+         (for-syntax racket)
+         racket/list
+         racket/port
+         racket/runtime-path
+         racket/set
          racket/string)
 
 (provide (all-defined-out))
@@ -32,3 +37,10 @@
 (define batcher-timeout (string->number (or (getenv "NEMEA_BATCHER_TIMEOUT") "30")))
 
 (define log-level (string->symbol (or (getenv "NEMEA_LOG_LEVEL") "info")))
+
+(define-runtime-path spammers-file-path (build-path 'up "assets" "data" "spammers.txt"))
+(define spammers
+  (call-with-input-file spammers-file-path
+    (lambda (in)
+      (list->set
+       (string-split (port->string in) "\n")))))
