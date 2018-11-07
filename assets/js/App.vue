@@ -9,6 +9,10 @@
           <router-link to="/tracking" tag="li" class="nav__item" active-class="nav__item--active">
             <a>Tracking</a>
           </router-link>
+
+          <li class="nav__item" v-if="returnURL" style="float: right;">
+            <a :href="returnURL">Back to Your Sites</a>
+          </li>
         </ul>
       </div>
     </div>
@@ -20,5 +24,15 @@
 </template>
 
 <script>
-  export default {};
+  import { parseCookies } from "./lib/cookies.js";
+
+  export default {
+    data() {
+      const cookies = parseCookies();
+
+      return {
+        returnURL: cookies["ret"] || null,
+      };
+    }
+  };
 </script>
