@@ -72,7 +72,8 @@
 
     &__value {
       font-weight: 600;
-      text-transform: lowercase;
+      letter-spacing: 0;
+      text-transform: uppercase;
     }
   }
 </style>

@@ -1,5 +1,6 @@
 @import "./_colors.scss";
-@import "./_fonts.scss";
+
+@import "system-font-css/system-font.css";
 
 * {
   margin: 0;
@@ -10,7 +11,7 @@
 body {
   background: #fefefe;
   color: $text;
-  font: 62.5%/1.4 "Montserrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font: 62.5%/1.4 system-ui;
   font-kerning: normal;
   font-size: 1rem;
 }
@@ -33,7 +34,7 @@ h1, h2, h3, h4, h5, h6 {
 
 code, pre {
   overflow: scroll;
-  font-family: "Fira Mono", "Operator Mono", "Inconsolata", monospace;
+  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", Courier, monospace;
   font-size: 0.8rem;
 }
 
@@ -43,7 +44,7 @@ code, pre {
 
 .nav {
   background: $background;
-  box-shadow: 0 5px 15px $shadow;
+  box-shadow: 0 5px 15px $shadow, 0 5px 15px $shadow;
 
   &__items {
     list-style-type: none;
@@ -79,8 +80,8 @@ code, pre {
 
   td {
     overflow: hidden;
-    font-size: 0.8rem;
-    font-weight: 400;
+    font-size: 0.9rem;
+    font-weight: 300;
   }
 
   th {
@@ -96,9 +97,12 @@ code, pre {
     border-bottom: 1px solid $shadow;
     padding: 1rem;
     text-align: right;
-    text-overflow: ellipsis;
     width: 80px;
-    white-space: nowrap;
+
+    &:first-child {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     &:nth-child(1) {
       width: auto;
