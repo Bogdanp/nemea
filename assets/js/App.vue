@@ -3,9 +3,9 @@
     <div class="nav">
       <div class="container">
         <ul class="nav__items">
-          <router-link to="/" tag="li" class="nav__item">
-            <a class="logo">nemea</a>
-          </router-link>
+          <li class="nav__item">
+            <a :href="returnURL" class="logo">nemea</a>
+          </li>
 
           <router-link to="/" tag="li" class="nav__item" active-class="nav__item--active" exact>
             <a>Dashboard</a>
@@ -13,10 +13,6 @@
           <router-link to="/setup" tag="li" class="nav__item" active-class="nav__item--active">
             <a>Setup</a>
           </router-link>
-
-          <li class="nav__item" v-if="returnURL" style="float: right;">
-            <a :href="returnURL">Back to Your Sites</a>
-          </li>
         </ul>
       </div>
     </div>
@@ -49,7 +45,7 @@
       const cookies = parseCookies();
 
       return {
-        returnURL: cookies["ret"] || null,
+        returnURL: cookies["ret"] || "/",
       };
     }
   };
