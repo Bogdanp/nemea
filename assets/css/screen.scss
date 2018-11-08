@@ -56,7 +56,9 @@ code, pre {
 
     a {
       display: inline-block;
-      padding: 1rem 0.5rem;
+      padding: 0 0.5rem 0 0;
+      height: 50px;
+      line-height: 50px;
       color: $text-faded;
       font-size: 0.8rem;
       font-weight: 400;
@@ -69,6 +71,19 @@ code, pre {
     &:hover a,
     &--active a {
       color: $text;
+    }
+
+    .logo {
+      background: url("../img/logo-icon.png") no-repeat 0px 14px;
+      background-size: 20px 20px;
+      margin: 0 10px;
+      display: block;
+      color: rgba(0, 0, 0, 0);
+      width: 20px;
+    }
+
+    &:hover .logo {
+      color: rgba(0, 0, 0, 0);
     }
   }
 }
