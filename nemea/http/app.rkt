@@ -12,6 +12,7 @@
          web-server/http
          web-server/servlet-dispatch
          "../components/batcher.rkt"
+         "../components/current-visitors.rkt"
          "../components/database.rkt"
          "../components/reporter.rkt"
          "../components/system.rkt"
@@ -22,7 +23,7 @@
 
 (provide (contract-out
           [struct app ((dispatcher dispatcher/c))]
-          [make-app (-> database? batcher? reporter? app?)]))
+          [make-app (-> database? batcher? current-visitors? reporter? app?)]))
 
 (define-runtime-path static-path
   (build-path 'up 'up "static"))
@@ -32,7 +33,7 @@
   [(define (component-start app) app)
    (define (component-stop app) (void))])
 
-(define (make-app database batcher reporter)
+(define (make-app database batcher current-visitors reporter)
   (define file-server
     (files:make
      #:url->path (make-url->path static-path)
@@ -40,7 +41,8 @@
 
   (define-values (dispatch _)
     (dispatch-rules
-     [("track") (track-page-visit batcher)]
+     [("track") (track-page-visit batcher current-visitors)]
+     [("v0" "visitors-stream") (get-current-visitors current-visitors)]
      [("v0" "reports" "daily") (get-daily-report reporter)]
      [else not-found]))
 

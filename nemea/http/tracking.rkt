@@ -7,6 +7,7 @@
          web-server/http
          (prefix-in config: "../config.rkt")
          "../components/batcher.rkt"
+         "../components/current-visitors.rkt"
          "../components/page-visit.rkt"
          "middleware.rkt"
          "utils.rkt")
@@ -14,9 +15,11 @@
 (provide track-page-visit)
 
 ;; This is on the "hot path" so it has no contract.
-(define ((track-page-visit batcher) req)
+(define ((track-page-visit batcher current-visitors) req)
   (when (track? req)
-    (enqueue batcher (request->page-visit req)))
+    (define page-visit (request->page-visit req))
+    (current-visitors-track current-visitors (page-visit-unique-id page-visit))
+    (enqueue batcher page-visit))
   (response/pixel))
 
 (define (track? req)

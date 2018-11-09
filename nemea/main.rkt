@@ -5,6 +5,7 @@
          racket/match
          web-server/web-server
          "components/batcher.rkt"
+         "components/current-visitors.rkt"
          "components/database.rkt"
          "components/migrator.rkt"
          "components/reporter.rkt"
@@ -15,9 +16,10 @@
 
 (define prod-system
   (make-system
-   `((app [database batcher reporter] ,make-app)
+   `((app [database batcher current-visitors reporter] ,make-app)
      (batcher [database] ,(make-batcher #:channel-size config:batcher-channel-size
                                         #:timeout config:batcher-timeout))
+     (current-visitors ,make-current-visitors)
      (database ,(make-database #:server config:db-host
                                #:port config:db-port
                                #:username config:db-username

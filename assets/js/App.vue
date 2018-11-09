@@ -25,6 +25,7 @@
 
 <script>
   import { deleteCookie, parseCookies } from "./lib/cookies.js";
+  import { visitorTracker } from "./lib/reporting.js";
 
   const ONBOARDING_COOKIE = "onboarding";
 
@@ -39,6 +40,17 @@
           deleteCookie(ONBOARDING_COOKIE);
         }
       }
+
+      const initialTitle = document.title;
+      visitorTracker.addListener((visitors) => {
+        if (visitors > 1) {
+          document.title = `${visitors} visitors online :: ${initialTitle}`;
+        } else if (visitors === 1) {
+          document.title = `${visitors} visitor online :: ${initialTitle}`;
+        } else {
+          document.title = initialTitle;
+        }
+      });
     },
 
     data() {

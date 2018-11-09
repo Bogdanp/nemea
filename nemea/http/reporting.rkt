@@ -4,12 +4,23 @@
          net/url
          racket/contract
          web-server/http
+         "../components/current-visitors.rkt"
          "../components/reporter.rkt"
          "middleware.rkt"
          "utils.rkt")
 
-(provide (contract-out
-          [get-daily-report (-> reporter? (-> request? response?))]))
+(provide get-current-visitors
+         get-daily-report)
+
+(define ((get-current-visitors cv) req)
+  (response/output
+   (lambda (out)
+     (current-visitors-subscribe cv (current-thread))
+     (let loop ()
+       (define visitors (thread-receive))
+       (define data (string->bytes/utf-8 (number->string visitors)))
+       (write-bytes (bytes-append data #"\n") out)
+       (loop)))))
 
 (define ((get-daily-report reporter) req)
   (define query (url-query (request-uri req)))

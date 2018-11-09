@@ -46,7 +46,7 @@
   import { capitalize } from "../lib/strings.js";
   import { datesInRange, formatDate, makeContinuous } from "../lib/dates.js";
   import { numeric } from "../lib/formatting.js";
-  import { getDailyReport} from "../lib/reporting.js";
+  import { getDailyReport, visitorTracker } from "../lib/reporting.js";
   import { makeTimeseriesOptions } from "../lib/charts.js";
 
   import Card from "../components/Card.vue";
@@ -90,6 +90,7 @@
       return {
         currentReport: "visits",
         preset: "last-7",
+        currentVisitors: null,
         report: {
           totals: {
             visits: 0,
@@ -109,6 +110,13 @@
         .then(report => {
           this.report = report;
         });
+
+      this._visitorCountChanged = this.visitorCountChanged.bind(this);
+      visitorTracker.addListener(this._visitorCountChanged);
+    },
+
+    beforeDestroy() {
+      visitorTracker.removeListener(this._visitorCountChanged);
     },
 
     computed: {
@@ -224,6 +232,16 @@
 
       reportChanged(id) {
         this.currentReport = id;
+      },
+
+      visitorCountChanged(visitors) {
+        if (visitors > 1) {
+          this.currentVisitors = `${visitors} visitors online right now`;
+        } else if (visitors === 1) {
+          this.currentVisitors = `${visitors} visitor online right now`;
+        } else {
+          this.currentVisitors = null;
+        }
       },
     },
   };
