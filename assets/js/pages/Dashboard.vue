@@ -15,6 +15,8 @@
                   :value="report.totals.visitors"
                   :active="currentReport == 'visitors'"
                   @activate="reportChanged"></totals-box>
+
+      <totals-box id="online" label="Online" :value="currentVisitors"></totals-box>
     </div>
 
     <div class="charts">
@@ -90,7 +92,7 @@
       return {
         currentReport: "visits",
         preset: "last-7",
-        currentVisitors: null,
+        currentVisitors: 0,
         report: {
           totals: {
             visits: 0,
@@ -235,13 +237,7 @@
       },
 
       visitorCountChanged(visitors) {
-        if (visitors > 1) {
-          this.currentVisitors = `${visitors} visitors online right now`;
-        } else if (visitors === 1) {
-          this.currentVisitors = `${visitors} visitor online right now`;
-        } else {
-          this.currentVisitors = null;
-        }
+        this.currentVisitors = visitors;
       },
     },
   };
@@ -270,16 +266,12 @@
       column-gap: 1rem;
       grid-template-columns: 1fr 1fr;
     }
-
-    .totals-box:nth-child(3) {
-      grid-column: 1 / 3;
-    }
   }
 
   @media (min-width: 1024px) {
     .totals {
       column-gap: 1rem;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
     }
 
     .totals-box:nth-child(3) {
