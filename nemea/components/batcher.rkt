@@ -19,8 +19,7 @@
           [struct batcher ((database database?)
                            (events async-channel?)
                            (timeout exact-positive-integer?)
-                           (listener-thread (or/c false/c thread?))
-                           (timer-thread (or/c false/c thread?)))]
+                           (listener-thread (or/c false/c thread?)))]
 
           [make-batcher (->* ()
                              (#:channel-size exact-positive-integer?
@@ -31,26 +30,23 @@
 
 (define-logger batcher)
 
-(struct batcher (database events timeout listener-thread timer-thread )
+(struct batcher (database events timeout listener-thread)
   #:methods gen:component
   [(define (component-start a-batcher)
      (log-batcher-debug "starting batcher")
      (struct-copy batcher a-batcher
-                  [listener-thread (thread (make-listener a-batcher))]
-                  [timer-thread (thread (make-timer a-batcher))]))
+                  [listener-thread (thread (make-listener a-batcher))]))
 
    (define (component-stop a-batcher)
      (log-batcher-debug "stopping batcher")
      (!> a-batcher 'stop)
-     (kill-thread (batcher-timer-thread a-batcher))
      (thread-wait (batcher-listener-thread a-batcher))
      (struct-copy batcher a-batcher
-                  [listener-thread #f]
-                  [timer-thread #f]))])
+                  [listener-thread #f]))])
 
 (define ((make-batcher #:channel-size [channel-size 500]
                        #:timeout [timeout 60]) database)
-  (batcher database (make-async-channel channel-size) timeout #f #f))
+  (batcher database (make-async-channel channel-size) timeout #f))
 
 (define (!> batcher event)
   (async-channel-put (batcher-events batcher) event))
@@ -60,27 +56,33 @@
   (async-channel-put (batcher-events batcher) (list date page-visit)))
 
 (define ((make-listener batcher))
+  (define timeout (* (batcher-timeout batcher) 1000))
+  (define events (batcher-events batcher))
+
   (let loop ([batch (hash)])
-    (match (async-channel-get (batcher-events batcher))
-      ['stop
-       (log-batcher-debug "received 'stop")
-       (upsert-batch! batcher batch)
-       (void)]
+    (sync
+     (choice-evt
+      (handle-evt
+       events
+       (lambda (event)
+         (match event
+           ['stop
+            (log-batcher-debug "received 'stop")
+            (upsert-batch! batcher batch)
+            (void)]
 
-      ['timeout
-       (log-batcher-debug "received 'timeout")
-       (upsert-batch! batcher batch)
-       (loop (hash))]
+           ['timeout
+            (log-batcher-debug "received 'timeout")
+            (upsert-batch! batcher batch)
+            (loop (hash))]
 
-      [(list d pv)
-       (loop (batch-aggregate batch d pv))])))
+           [(list d pv)
+            (loop (batch-aggregate batch d pv))])))
 
-(define ((make-timer batcher))
-  (let loop ()
-    (sleep (batcher-timeout batcher))
-    (log-batcher-debug "sending 'timeout")
-    (!> batcher 'timeout)
-    (loop)))
+      (handle-evt
+       (alarm-evt (+ (current-inexact-milliseconds) timeout))
+       (lambda (e)
+         (async-channel-put events 'timeout)))))))
 
 (define (batch-aggregate batch d pv)
   (define k (make-grouping d pv))
@@ -176,7 +178,7 @@ SQL
       (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
       (enqueue (system-get test-system 'batcher) (page-visit "a" "c" (string->url "http://example.com/a") #f #f))
       (!> (system-get test-system 'batcher) 'timeout)
-      (sleep 0.1) ;; force the current thread to yield
+      (sync (system-idle-evt))
 
       (check-equal?
        (with-database-connection (conn (system-get test-system 'database))
@@ -187,8 +189,7 @@ SQL
       (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
       (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/b") #f #f))
       (!> (system-get test-system 'batcher) 'stop)
-      (sleep 0.1) ;; force the current thread to yield
-
+      (sync (system-idle-evt))
 
       (check-eq?
        (with-database-connection (conn (system-get test-system 'database))
