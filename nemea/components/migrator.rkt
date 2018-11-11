@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket)
+         component/base
          db
          racket/contract
          racket/file
@@ -9,8 +10,7 @@
          racket/path
          racket/runtime-path
          racket/string
-         "database.rkt"
-         "system.rkt")
+         "database.rkt")
 
 (provide (contract-out
           [struct migrator ((database database?))]
@@ -24,8 +24,7 @@
      (migrate! migrator)
      migrator)
 
-   (define (component-stop migrator)
-     (void))])
+   (define (component-stop migrator) migrator)])
 
 (define (make-migrator database)
   (-> database? migrator?)

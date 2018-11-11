@@ -1,9 +1,10 @@
 #lang racket/base
 
-(require racket/contract
+(require component/base
+         racket/contract
+         racket/list
          racket/match
-         racket/set
-         "system.rkt")
+         racket/set)
 
 (provide (contract-out
           [struct current-visitors ((session-timeout exact-positive-integer?)
@@ -22,7 +23,9 @@
      cv)
 
    (define (component-stop cv)
-     (thread-send (current-visitors-manager-thread cv) 'stop))])
+     (thread-send (current-visitors-manager-thread cv) 'stop)
+     (set-current-visitors-manager-thread! cv #f)
+     cv)])
 
 (define (make-current-visitors #:session-timeout [session-timeout 60])
   (current-visitors session-timeout #f))

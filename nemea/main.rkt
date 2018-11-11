@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require gregor
+(require component/base
+         gregor
          racket/format
          racket/match
          web-server/web-server
@@ -9,7 +10,6 @@
          "components/database.rkt"
          "components/migrator.rkt"
          "components/reporter.rkt"
-         "components/system.rkt"
          (prefix-in config: "config.rkt")
          "http/app.rkt"
          "http/server.rkt")

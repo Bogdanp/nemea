@@ -2,6 +2,7 @@
 
 (define collection "nemea")
 (define deps '("base"
+               "component-lib"
                "db-lib"
                "gregor-lib"
                "sql"

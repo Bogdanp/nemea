@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require db
+(require component/base
+         db
          gregor
          gregor/period
          racket/contract
@@ -9,7 +10,6 @@
          racket/math
          sql
          "database.rkt"
-         "system.rkt"
          "utils.rkt")
 
 (provide (contract-out
@@ -20,7 +20,7 @@
 (struct reporter (database)
   #:methods gen:component
   [(define (component-start reporter) reporter)
-   (define (component-stop reporter) (void))])
+   (define (component-stop reporter) reporter)])
 
 (define (make-reporter database)
   (reporter database))

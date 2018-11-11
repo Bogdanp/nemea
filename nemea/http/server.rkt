@@ -1,9 +1,9 @@
 #lang racket/base
 
-(require racket/contract
+(require component/base
+         racket/contract
          web-server/servlet-dispatch
          web-server/web-server
-         "../components/system.rkt"
          "app.rkt")
 
 (provide (contract-out

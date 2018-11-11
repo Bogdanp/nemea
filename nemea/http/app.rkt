@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require (for-syntax racket)
+(require component/base
+         (for-syntax racket)
          racket/contract
          racket/runtime-path
          threading
@@ -15,7 +16,6 @@
          "../components/current-visitors.rkt"
          "../components/database.rkt"
          "../components/reporter.rkt"
-         "../components/system.rkt"
          "middleware.rkt"
          "reporting.rkt"
          "tracking.rkt"

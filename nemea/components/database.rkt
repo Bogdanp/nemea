@@ -1,9 +1,9 @@
 #lang racket/base
 
-(require db
+(require component/base
+         db
          racket/class
-         racket/contract
-         "system.rkt")
+         racket/contract)
 
 (provide (contract-out
           [struct database ((connection-pool connection-pool?)
@@ -45,8 +45,8 @@
                                        #:server (database-opts-server options)
                                        #:port (database-opts-port options))))]))
 
-   (define (component-stop database)
-     (void))])
+   (define (component-stop a-database)
+     (struct-copy database a-database [connection-pool #f]))])
 
 (define ((make-database #:database database-name
                         #:username username

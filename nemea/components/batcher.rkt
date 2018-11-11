@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require db
+(require component/base
+         db
          db/util/postgresql
          gregor
          net/url
@@ -12,7 +13,6 @@
          (prefix-in config: "../config.rkt")
          "database.rkt"
          "page-visit.rkt"
-         "system.rkt"
          "utils.rkt")
 
 (provide (contract-out
@@ -39,11 +39,14 @@
                   [listener-thread (thread (make-listener a-batcher))]
                   [timer-thread (thread (make-timer a-batcher))]))
 
-   (define (component-stop batcher)
+   (define (component-stop a-batcher)
      (log-batcher-debug "stopping batcher")
-     (!> batcher 'stop)
-     (kill-thread (batcher-timer-thread batcher))
-     (thread-wait (batcher-listener-thread batcher)))])
+     (!> a-batcher 'stop)
+     (kill-thread (batcher-timer-thread a-batcher))
+     (thread-wait (batcher-listener-thread a-batcher))
+     (struct-copy batcher a-batcher
+                  [listener-thread #f]
+                  [timer-thread #f]))])
 
 (define ((make-batcher #:channel-size [channel-size 500]
                        #:timeout [timeout 60]) database)
