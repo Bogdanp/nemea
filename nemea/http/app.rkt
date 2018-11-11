@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require component/base
+(require component
          (for-syntax racket)
          racket/contract
          racket/runtime-path

@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require (for-syntax racket)
-         component/base
+         component
          db
          racket/contract
          racket/file

@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require component/base
+(require component
          racket/contract
          racket/list
          racket/match

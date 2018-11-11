@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require component/base
+(require component
          db
          racket/class
          racket/contract)

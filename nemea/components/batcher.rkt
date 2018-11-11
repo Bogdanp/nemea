@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require component/base
+(require component
          db
          db/util/postgresql
          gregor
@@ -154,12 +154,12 @@ SQL
            rackunit/text-ui
            "migrator.rkt")
 
-  (define test-system
-    (make-system `((database ,(make-database #:database "nemea_tests"
-                                             #:username "nemea"
-                                             #:password "nemea"))
-                   (batcher (database) ,(make-batcher))
-                   (migrator (database) ,make-migrator))))
+  (define-system test
+    [database (make-database #:database "nemea_tests"
+                             #:username "nemea"
+                             #:password "nemea")]
+    [batcher (database) (make-batcher)]
+    [migrator (database) make-migrator])
 
   (run-tests
    (test-suite

@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require component/base
+(require component
          gregor
          racket/format
          racket/match
@@ -14,23 +14,23 @@
          "http/app.rkt"
          "http/server.rkt")
 
-(define prod-system
-  (make-system
-   `((app [database batcher current-visitors reporter] ,make-app)
-     (batcher [database] ,(make-batcher #:channel-size config:batcher-channel-size
-                                        #:timeout config:batcher-timeout))
-     (current-visitors ,make-current-visitors)
-     (database ,(make-database #:server config:db-host
-                               #:port config:db-port
-                               #:username config:db-username
-                               #:password config:db-password
-                               #:database config:db-name
-                               #:max-connections config:db-max-connections
-                               #:max-idle-connections config:db-max-idle-connections))
-     (migrator [database] ,make-migrator)
-     (reporter [database] ,make-reporter)
-     (server [app] ,(make-server #:listen-ip config:listen-ip
-                                 #:port config:port)))))
+(define-system prod
+  [app (database batcher current-visitors reporter) make-app]
+  [batcher (database) (make-batcher #:channel-size config:batcher-channel-size
+                                    #:timeout config:batcher-timeout)]
+  [current-visitors make-current-visitors]
+  [database (make-database #:server config:db-host
+                           #:port config:db-port
+                           #:username config:db-username
+                           #:password config:db-password
+                           #:database config:db-name
+                           #:max-connections config:db-max-connections
+                           #:max-idle-connections config:db-max-idle-connections)]
+  [migrator (database) make-migrator]
+  [reporter (database) make-reporter]
+  [server (app) (make-server #:listen-ip config:listen-ip
+                             #:port config:port)])
+
 
 (module+ main
   (file-stream-buffer-mode (current-error-port) 'line)

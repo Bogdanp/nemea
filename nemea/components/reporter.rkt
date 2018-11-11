@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require component/base
+(require component
          db
          gregor
          gregor/period
@@ -131,12 +131,12 @@
            (prefix-in config: "../config.rkt")
            "migrator.rkt")
 
-  (define test-system
-    (make-system `((database ,(make-database #:database "nemea_tests"
-                                             #:username "nemea"
-                                             #:password "nemea"))
-                   (migrator [database] ,make-migrator)
-                   (reporter [database] ,make-reporter))))
+  (define-system test
+    [database (make-database #:database "nemea_tests"
+                             #:username "nemea"
+                             #:password "nemea")]
+    [migrator (database) make-migrator]
+    [reporter (database) make-reporter])
 
   (define (make-row host path visits)
     (hasheq 'host host
