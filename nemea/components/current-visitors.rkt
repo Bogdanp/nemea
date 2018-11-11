@@ -31,7 +31,7 @@
   (current-visitors session-timeout #f))
 
 (define ((make-manager-thread session-timeout))
-  (let loop ([sessions (hash)]
+  (let loop ([visitors (hash)]
              [listeners (set)])
 
     (sync
@@ -43,27 +43,30 @@
            ['stop (void)]
 
            ['broadcast
-            (for ([listener listeners] #:unless (thread-dead? listener))
-              (thread-send listener (hash-count sessions)))
+            (define deadline (- (current-seconds) session-timeout))
+            (define active-visitors
+              (for/hash ([(visitor-id timestamp) (in-hash visitors)] #:unless (< timestamp deadline))
+                (values visitor-id timestamp)))
 
-            (loop sessions listeners)]
+            (define active-listeners (filter-not thread-dead? (set->list listeners)))
+            (for ([listener active-listeners])
+              (thread-send listener (hash-count active-visitors)))
+
+            (loop active-visitors (list->set active-listeners))]
 
            [(list 'subscribe t)
-            (loop sessions (set-add listeners t))]
+            (thread-send t (hash-count visitors))
+            (loop visitors (set-add listeners t))]
 
            [(list 'track visitor-id)
-            (loop (hash-set sessions visitor-id (current-seconds)) listeners)])))
+            (thread-send (current-thread) 'broadcast)
+            (loop (hash-set visitors visitor-id (current-seconds)) listeners)])))
 
       (handle-evt
        (alarm-evt (+ (current-inexact-milliseconds) 1000))
        (lambda (e)
-         (define deadline (- (current-seconds) session-timeout))
-         (define active-sessions (for/hash ([(visitor-id timestamp) (in-hash sessions)]
-                                            #:unless (< timestamp deadline))
-                                   (values visitor-id timestamp)))
-
          (thread-send (current-thread) 'broadcast)
-         (loop active-sessions listeners)))))))
+         (loop visitors listeners)))))))
 
 (define (current-visitors-subscribe current-visitors listener)
   (thread-send (current-visitors-manager-thread current-visitors)
@@ -77,12 +80,13 @@
   (require rackunit
            rackunit/text-ui)
 
-  (define last-count #f)
   (define waiter (make-semaphore))
   (define cv (make-current-visitors #:session-timeout 2))
+
+  (define counts '())
   (define t1 (thread (lambda ()
                        (let loop ()
-                         (set! last-count (thread-receive))
+                         (set! counts (cons (thread-receive) counts))
                          (semaphore-post waiter)
                          (loop)))))
 
@@ -100,20 +104,23 @@
 
     (test-case "tracking"
       (sync/timeout 2 waiter)
-      (check-equal? last-count 0 "timeout after none tracked")
+      (check-equal? counts '(0) "timeout after none tracked")
 
       (current-visitors-track cv "alice")
       (current-visitors-track cv "bob")
-      (sync/timeout 2 waiter)
-      (check-equal? last-count 2 "timeout after 2 tracked")
+      (sync/timeout 2 waiter) ; broadcast for alice
+      (sync/timeout 2 waiter) ; broadcast for bob
+      (sync/timeout 2 waiter) ; timeout
+      (check-equal? counts '(2 2 2 0) "timeout after alice and bob tracked")
 
-      (sync/timeout 2 waiter)
-      (check-equal? last-count 2 "timeout after 2 tracked no. 2")
+      (sync/timeout 2 waiter) ; timeout
+      (check-equal? counts '(2 2 2 2 0) "timeout after alice and bob tracked no. 2")
 
       (current-visitors-track cv "bob")
-      (sync/timeout 2 waiter)
-      (check-equal? last-count 1 "timeout after 1 tracked again")
+      (sync/timeout 2 waiter) ; broadcast for bob
+      (sync/timeout 2 waiter) ; timeout
+      (check-equal? counts '(1 2 2 2 2 2 0) "timeout after bob tracked again")
 
-      (sync/timeout 2 waiter)
-      (sync/timeout 2 waiter)
-      (check-equal? last-count 0 "two timeouts after none tracked")))))
+      (sync/timeout 2 waiter) ; timeout
+      (sync/timeout 2 waiter) ; timeout
+      (check-equal? counts '(0 1 1 2 2 2 2 2 0) "2 timeouts after bob tracked again no. 2")))))
