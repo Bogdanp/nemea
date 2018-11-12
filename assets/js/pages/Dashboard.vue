@@ -16,7 +16,10 @@
                   :active="currentReport == 'visitors'"
                   @activate="reportChanged"></totals-box>
 
-      <totals-box id="online" label="Online" :value="currentVisitors"></totals-box>
+      <totals-box id="online" label="Online"
+                  :value="onlineVisiors"
+                  :active="currentReport == 'online'"
+                  @activate="reportChanged"></totals-box>
     </div>
 
     <div class="charts">
@@ -45,7 +48,7 @@
 </template>
 
 <script>
-  import { capitalize } from "../lib/strings.js";
+  import { arraysEqual } from "../lib/arrays.js";
   import { datesInRange, formatDate, makeContinuous } from "../lib/dates.js";
   import { numeric } from "../lib/formatting.js";
   import { getDailyReport, visitorTracker } from "../lib/reporting.js";
@@ -59,11 +62,14 @@
   import VueApexCharts from "vue-apexcharts";
   import addDays from "date-fns/add_days";
   import differenceInDays from "date-fns/difference_in_days";
+  import distanceInWords from "date-fns/distance_in_words";
   import subDays from "date-fns/sub_days";
   import startOfDay from "date-fns/start_of_day";
   import startOfTomorrow from "date-fns/start_of_tomorrow";
   import startOfToday from "date-fns/start_of_today";
   import startOfYesterday from "date-fns/start_of_today";
+
+  const MAX_ONLINE_TIMESERIES_LENGTH = 10;
 
   const BAR_CHART_CUTOFF = 14;
 
@@ -89,10 +95,15 @@
     },
 
     data() {
+      const now = new Date() * 1;
+      const onlineVisitorsByMinute = {};
+      for (let i = 0; i < MAX_ONLINE_TIMESERIES_LENGTH; i++) {
+        onlineVisitorsByMinute[now - now % 60000 - i * 60000] = 0;
+      }
+
       return {
         currentReport: "visits",
         preset: "last-7",
-        currentVisitors: 0,
         report: {
           totals: {
             visits: 0,
@@ -104,6 +115,10 @@
           ["pages-breakdown"]: [],
           ["referrers-breakdown"]: [],
         },
+
+        onlineVisiors: 0,
+        onlineVisitorsByMinute: onlineVisitorsByMinute,
+        onlineVisitorsTimeseries: [],
       };
     },
 
@@ -159,6 +174,18 @@
               formatter: numeric,
             },
           };
+        } else if (this.currentReport === "online") {
+          options.fill.opacity = [0.2, 0];
+          options.tooltip = {
+            x: {
+              formatter: (date) => {
+                return distanceInWords(new Date, date, { addSuffix: true });
+              },
+            },
+            y: {
+              formatter: numeric,
+            },
+          };
         } else {
           options.fill.opacity = [0.2, 0];
           options.tooltip = {
@@ -185,14 +212,12 @@
       },
 
       series() {
-        const previousTimeseries = makeContinuous(
-          this.startDate,
-          this.endDate,
-          this.report.timeseries[0].map(data => ({
-            date: addDays(new Date(data.date), this.daysInRange),
-            value: data[this.currentReport],
-          }))
-        );
+        if (this.currentReport === "online") {
+          return [{
+            name: "online",
+            data: this.onlineVisitorsTimeseries,
+          }];
+        }
 
         const currentTimeseries = makeContinuous(
           this.startDate,
@@ -205,18 +230,27 @@
 
         if (this.chartType === "bar") {
           return [{
-            name: capitalize(this.currentReport),
+            name: this.currentReport,
             data: currentTimeseries,
-          }];
-        } else {
-          return [{
-            name: capitalize(this.currentReport),
-            data: currentTimeseries,
-          }, {
-            name: "Previously",
-            data: previousTimeseries,
           }];
         }
+
+        const previousTimeseries = makeContinuous(
+          this.startDate,
+          this.endDate,
+          this.report.timeseries[0].map(data => ({
+            date: addDays(new Date(data.date), this.daysInRange),
+            value: data[this.currentReport],
+          }))
+        );
+
+        return [{
+          name: this.currentReport,
+          data: currentTimeseries,
+        }, {
+          name: "previously",
+          data: previousTimeseries,
+        }];
       },
     },
 
@@ -237,7 +271,22 @@
       },
 
       visitorCountChanged(visitors) {
-        this.currentVisitors = visitors;
+        const now = new Date() * 1;
+        const currentMinute = now - now % 60000;
+        this.onlineVisiors = visitors;
+        this.onlineVisitorsByMinute[currentMinute] = Math.max(
+          this.onlineVisitorsByMinute[currentMinute] || 0, visitors);
+
+        let timeseries = Object.keys(this.onlineVisitorsByMinute).sort().reverse().map(minute => {
+          return [new Date(minute * 1), this.onlineVisitorsByMinute[minute]];
+        }).sort();
+        timeseries = timeseries.slice(timeseries.length - 10);
+
+        const timeseriesValues = timeseries.map(([_, x]) => x);
+        const previousValues = this.onlineVisitorsTimeseries.map(([_, x]) => x);
+        if (!arraysEqual(timeseriesValues, previousValues)) {
+          this.onlineVisitorsTimeseries = timeseries;
+        }
       },
     },
   };
