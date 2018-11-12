@@ -7,6 +7,6 @@
                "gregor-lib"
                "sql"
                "threading-lib"
-               "web-server-lib"))
+               "https://github.com/racket/web-server.git?path=web-server-lib"))
 (define build-deps '("at-exp-lib"
                      "rackunit-lib"))
