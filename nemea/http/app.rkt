@@ -32,7 +32,7 @@
 (struct app (dispatcher)
   #:methods gen:component
   [(define (component-start app) app)
-   (define (component-stop app) (void))])
+   (define (component-stop app) app)])
 
 (define (make-app database migrator batcher current-visitors reporter)
   (define file-server

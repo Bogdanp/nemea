@@ -29,8 +29,9 @@
 
      (struct-copy server a-server [stopper stopper]))
 
-   (define (component-stop server)
-     ((server-stopper server)))])
+   (define (component-stop a-server)
+     ((server-stopper a-server))
+     (struct-copy server a-server [stopper #f]))])
 
 (define ((make-server #:listen-ip [listen-ip "127.0.0.1"]
                       #:port [port 8000]) app)

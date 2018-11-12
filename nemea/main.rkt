@@ -64,4 +64,4 @@
   (with-handlers ([exn:break? (lambda (e)
                                 (system-stop prod-system)
                                 (sleep 1))])
-    (semaphore-wait/enable-break (make-semaphore 0))))
+    (sync/enable-break never-evt)))
