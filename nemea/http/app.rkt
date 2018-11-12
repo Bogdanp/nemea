@@ -15,6 +15,7 @@
          "../components/batcher.rkt"
          "../components/current-visitors.rkt"
          "../components/database.rkt"
+         "../components/migrator.rkt"
          "../components/reporter.rkt"
          "middleware.rkt"
          "reporting.rkt"
@@ -23,7 +24,7 @@
 
 (provide (contract-out
           [struct app ((dispatcher dispatcher/c))]
-          [make-app (-> database? batcher? current-visitors? reporter? app?)]))
+          [make-app (-> database? migrator? batcher? current-visitors? reporter? app?)]))
 
 (define-runtime-path static-path
   (build-path 'up 'up "static"))
@@ -33,7 +34,7 @@
   [(define (component-start app) app)
    (define (component-stop app) (void))])
 
-(define (make-app database batcher current-visitors reporter)
+(define (make-app database migrator batcher current-visitors reporter)
   (define file-server
     (files:make
      #:url->path (make-url->path static-path)

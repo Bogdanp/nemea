@@ -17,7 +17,7 @@
 (provide prod-system)
 
 (define-system prod
-  [app (database batcher current-visitors reporter) make-app]
+  [app (database migrator batcher current-visitors reporter) make-app]
   [batcher (database) (make-batcher #:channel-size config:batcher-channel-size
                                     #:timeout config:batcher-timeout)]
   [current-visitors make-current-visitors]
