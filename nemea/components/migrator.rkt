@@ -49,7 +49,7 @@
   (query-exec conn "insert into migrations values($1)" ref))
 
 (define (migrate! migrator)
-  (with-database-connection (conn (migrator-database migrator))
+  (with-database-connection [conn (migrator-database migrator)]
     (query-exec conn "create table if not exists migrations(ref text not null unique)")
     (define latest-ref
       (or (query-maybe-value conn "select ref from migrations order by ref desc limit 1") ""))

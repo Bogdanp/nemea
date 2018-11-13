@@ -167,7 +167,7 @@ SQL
     #:before
     (lambda ()
       (system-start test-system)
-      (with-database-connection (conn (system-get test-system 'database))
+      (with-database-connection [conn (system-get test-system 'database)]
         (query-exec conn "truncate page_visits")))
 
     #:after
@@ -181,7 +181,7 @@ SQL
       (sync (system-idle-evt))
 
       (check-equal?
-       (with-database-connection (conn (system-get test-system 'database))
+       (with-database-connection [conn (system-get test-system 'database)]
          (query-row conn "select visits, hll_cardinality(visitors), hll_cardinality(sessions) from page_visits order by date desc limit 1"))
        #(2 1.0 2.0))
 
@@ -192,11 +192,11 @@ SQL
       (sync (system-idle-evt))
 
       (check-eq?
-       (with-database-connection (conn (system-get test-system 'database))
+       (with-database-connection [conn (system-get test-system 'database)]
          (query-value conn "select visits from page_visits where path = '/a' order by date desc limit 1"))
        4)
 
       (check-eq?
-       (with-database-connection (conn (system-get test-system 'database))
+       (with-database-connection [conn (system-get test-system 'database)]
          (query-value conn "select visits from page_visits where path = '/b' order by date desc limit 1"))
        1)))))

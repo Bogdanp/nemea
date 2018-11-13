@@ -158,7 +158,7 @@
     (lambda ()
       (system-start test-system)
 
-      (with-database-connection (conn (system-get test-system 'database))
+      (with-database-connection [conn (system-get test-system 'database)]
         (query-exec conn "truncate page_visits")
         (query-exec conn #<<SQL
 insert into
