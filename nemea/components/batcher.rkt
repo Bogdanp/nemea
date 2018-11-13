@@ -82,7 +82,8 @@
       (handle-evt
        (alarm-evt (+ (current-inexact-milliseconds) timeout))
        (lambda (e)
-         (async-channel-put events 'timeout)))))))
+         (async-channel-put events 'timeout)
+         (loop batch)))))))
 
 (define (batch-aggregate batch d pv)
   (define k (make-grouping d pv))
