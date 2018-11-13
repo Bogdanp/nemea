@@ -116,13 +116,12 @@
               'sessions (exact-floor sessions)
               'avg-time 0)))
 
-  (call-with-database-transaction (reporter-database reporter)
+  (with-database-transaction [conn (reporter-database reporter)]
     #:isolation 'repeatable-read
-    (lambda (conn)
-      (hasheq 'totals (get-totals conn)
-              'timeseries (get-timeseries conn)
-              'pages-breakdown (get-pages-breakdown conn)
-              'referrers-breakdown (get-referrers-breakdown conn)))))
+    (hasheq 'totals (get-totals conn)
+            'timeseries (get-timeseries conn)
+            'pages-breakdown (get-pages-breakdown conn)
+            'referrers-breakdown (get-referrers-breakdown conn))))
 
 
 (module+ test

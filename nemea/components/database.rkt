@@ -3,7 +3,10 @@
 (require component
          db
          racket/class
-         racket/contract)
+         racket/contract
+         (for-syntax racket/base
+                     racket/syntax
+                     syntax/parse))
 
 (provide (contract-out
           [struct database ((connection-pool connection-pool?)
@@ -24,7 +27,8 @@
                                                                   'read-uncommitted
                                                                   false/c)) any/c)])
 
-         with-database-connection)
+         with-database-connection
+         with-database-transaction)
 
 (struct database-opts (database username password server port max-connections max-idle-connections)
   #:transparent)
@@ -71,7 +75,7 @@
     (lambda () (proc connection))
     (lambda () (disconnect connection))))
 
-(define-syntax-rule (with-database-connection (name database) e ...)
+(define-syntax-rule (with-database-connection [name database] e ...)
   (call-with-database-connection database
     (lambda (name)
       e ...)))
@@ -81,6 +85,19 @@
     (call-with-transaction conn
       #:isolation isolation
       (lambda () (proc conn)))))
+
+(define-syntax (with-database-transaction stx)
+  (syntax-parse stx
+    [(_ [name:id database:expr] e:expr ...+)
+     #'(with-database-transaction (name database)
+         #:isolation #f
+         e ...)]
+
+    [(_ [name:id database:expr] #:isolation isolation e:expr ...+)
+     #'(call-with-database-transaction database
+         #:isolation isolation
+         (lambda (name)
+           e ...))]))
 
 (module+ test
   (require rackunit)
@@ -96,6 +113,17 @@
    1)
 
   (check-eq?
-   (with-database-connection (conn db)
+   (with-database-connection [conn db]
+     (query-value conn "select 1"))
+   1)
+
+  (check-eq?
+   (with-database-transaction [conn db]
+     (query-value conn "select 1"))
+   1)
+
+  (check-eq?
+   (with-database-transaction [conn db]
+     #:isolation 'repeatable-read
      (query-value conn "select 1"))
    1))

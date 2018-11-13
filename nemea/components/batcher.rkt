@@ -100,10 +100,9 @@
 (define (upsert-batch! batcher batch)
   (with-handlers ([exn:fail? (lambda (e)
                                (log-batcher-error "failed to upsert: ~a" (exn-message e)))])
-    (call-with-database-transaction (batcher-database batcher)
-      (lambda (conn)
-        (for ([(grouping agg) (in-hash batch)])
-          (upsert-agg! conn grouping agg))))))
+    (with-database-transaction [conn (batcher-database batcher)]
+      (for ([(grouping agg) (in-hash batch)])
+        (upsert-agg! conn grouping agg)))))
 
 (define/match (upsert-agg! conn grouping agg)
   [(_ _ (list visitors sessions visits))
