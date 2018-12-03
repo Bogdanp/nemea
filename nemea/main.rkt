@@ -19,8 +19,8 @@
 
 (define-system prod
   [app (database migrator batcher current-visitors reporter) make-app]
-  [batcher (database) (make-batcher #:channel-size config:batcher-channel-size
-                                    #:timeout config:batcher-timeout)]
+  [batcher (database geolocator) (make-batcher #:channel-size config:batcher-channel-size
+                                               #:timeout config:batcher-timeout)]
   [current-visitors make-current-visitors]
   [database (make-database #:server config:db-host
                            #:port config:db-port

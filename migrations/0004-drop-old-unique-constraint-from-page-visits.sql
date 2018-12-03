@@ -1,0 +1,1 @@
+alter table page_visits drop constraint "page_visits_date_host_path_referrer_host_referrer_path_key";

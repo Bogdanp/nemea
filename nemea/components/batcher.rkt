@@ -6,17 +6,20 @@
          gregor
          net/url
          racket/async-channel
-         racket/contract
+         racket/contract/base
+         racket/function
          racket/match
          racket/set
          threading
          (prefix-in config: "../config.rkt")
          "database.rkt"
+         "geolocator.rkt"
          "page-visit.rkt"
          "utils.rkt")
 
 (provide (contract-out
           [struct batcher ((database database?)
+                           (geolocator geolocator?)
                            (events async-channel?)
                            (timeout exact-positive-integer?)
                            (listener-thread (or/c false/c thread?)))]
@@ -24,13 +27,13 @@
           [make-batcher (->* ()
                              (#:channel-size exact-positive-integer?
                               #:timeout exact-positive-integer?)
-                             (-> database? batcher?))]
+                             (-> database? geolocator? batcher?))]
 
           [enqueue (-> batcher? page-visit? void?)]))
 
 (define-logger batcher)
 
-(struct batcher (database events timeout listener-thread)
+(struct batcher (database geolocator events timeout listener-thread)
   #:methods gen:component
   [(define (component-start a-batcher)
      (log-batcher-debug "starting batcher")
@@ -45,8 +48,8 @@
                   [listener-thread #f]))])
 
 (define ((make-batcher #:channel-size [channel-size 500]
-                       #:timeout [timeout 60]) database)
-  (batcher database (make-async-channel channel-size) timeout #f))
+                       #:timeout [timeout 60]) database geolocator)
+  (batcher database geolocator (make-async-channel channel-size) timeout #f))
 
 (define (!> batcher event)
   (async-channel-put (batcher-events batcher) event))
@@ -57,7 +60,9 @@
 
 (define ((make-listener batcher))
   (define timeout (* (batcher-timeout batcher) 1000))
+  (define geolocator (batcher-geolocator batcher))
   (define events (batcher-events batcher))
+  (define init (list (set) (set) 0))
 
   (let loop ([batch (hash)])
     (sync
@@ -77,19 +82,19 @@
             (loop (hash))]
 
            [(list d pv)
-            (loop (batch-aggregate batch d pv))])))
+            (define k (grouping d
+                                (url->canonical-host (page-visit-location pv))
+                                (url->canonical-path (page-visit-location pv))
+                                (and~> (page-visit-referrer pv) (url->canonical-host))
+                                (and~> (page-visit-referrer pv) (url->canonical-path))
+                                (and~>> (page-visit-client-ip pv) (geolocator-country-code geolocator))))
+            (loop (hash-update batch k (curry aggregate pv) init))])))
 
       (handle-evt
        (alarm-evt (+ (current-inexact-milliseconds) timeout))
        (lambda (e)
          (async-channel-put events 'timeout)
          (loop batch)))))))
-
-(define (batch-aggregate batch d pv)
-  (define k (make-grouping d pv))
-  (~>> (hash-ref batch k (list (set) (set) 0))
-       (aggregate pv)
-       (hash-set batch k)))
 
 (define/match (aggregate pv agg)
   [(_ (list visitors sessions visits))
@@ -102,31 +107,29 @@
                                (log-batcher-error "failed to upsert: ~a" (exn-message e)))])
     (with-database-transaction [conn (batcher-database batcher)]
       (for ([(grouping agg) (in-hash batch)])
-        (upsert-agg! conn grouping agg)))))
-
-(define/match (upsert-agg! conn grouping agg)
-  [(_ _ (list visitors sessions visits))
-   (query-exec conn UPSERT-BATCH-QUERY
-               (date->sql-date (grouping-date grouping))
-               (grouping-host grouping)
-               (grouping-path grouping)
-               (or (grouping-referrer-host grouping) "")
-               (or (grouping-referrer-path grouping) "")
-               visits
-               (list->pg-array (set->list visitors))
-               (list->pg-array (set->list sessions)))])
+        (match-define (list visitors sessions visits) agg)
+        (query-exec conn UPSERT-BATCH-QUERY
+                    (date->sql-date (grouping-date grouping))
+                    (grouping-host grouping)
+                    (grouping-path grouping)
+                    (or (grouping-referrer-host grouping) "")
+                    (or (grouping-referrer-path grouping) "")
+                    (or (grouping-country-code grouping) "ZZ")
+                    visits
+                    (list->pg-array (set->list visitors))
+                    (list->pg-array (set->list sessions)))))))
 
 (define UPSERT-BATCH-QUERY
   #<<SQL
 with
-  visitors_agg as (select hll_add_agg(hll_hash_text(s.x)) as visitors from (select unnest($7::text[]) as x) as s),
-  sessions_agg as (select hll_add_agg(hll_hash_text(s.x)) as sessions from (select unnest($8::text[]) as x) as s)
-insert into page_visits(date, host, path, referrer_host, referrer_path, visits, visitors, sessions)
-  values($1, $2, $3, $4, $5, $6, (select visitors from visitors_agg), (select sessions from sessions_agg))
-on conflict(date, host, path, referrer_host, referrer_path)
+  visitors_agg as (select hll_add_agg(hll_hash_text(s.x)) as visitors from (select unnest($8::text[]) as x) as s),
+  sessions_agg as (select hll_add_agg(hll_hash_text(s.x)) as sessions from (select unnest($9::text[]) as x) as s)
+insert into page_visits(date, host, path, referrer_host, referrer_path, country_code, visits, visitors, sessions)
+  values($1, $2, $3, $4, $5, $6, $7, (select visitors from visitors_agg), (select sessions from sessions_agg))
+on conflict on constraint page_visits_partition
 do update
   set
-    visits = page_visits.visits + $6,
+    visits = page_visits.visits + $7,
     visitors = page_visits.visitors || (select visitors from visitors_agg),
     sessions = page_visits.sessions || (select sessions from sessions_agg)
   where
@@ -134,19 +137,13 @@ do update
     page_visits.host = $2 and
     page_visits.path = $3 and
     page_visits.referrer_host = $4 and
-    page_visits.referrer_path = $5
+    page_visits.referrer_path = $5 and
+    page_visits.country_code = $6
 SQL
   )
 
-(struct grouping (date host path referrer-host referrer-path)
+(struct grouping (date host path referrer-host referrer-path country-code)
   #:transparent)
-
-(define (make-grouping d pv)
-  (grouping d
-            (url->canonical-host (page-visit-location pv))
-            (url->canonical-path (page-visit-location pv))
-            (and~> (page-visit-referrer pv) (url->canonical-host))
-            (and~> (page-visit-referrer pv) (url->canonical-path))))
 
 
 (module+ test
@@ -158,7 +155,8 @@ SQL
     [database (make-database #:database "nemea_tests"
                              #:username "nemea"
                              #:password "nemea")]
-    [batcher (database) (make-batcher)]
+    [batcher (database geolocator) (make-batcher)]
+    [geolocator make-geolocator]
     [migrator (database) make-migrator])
 
   (run-tests
