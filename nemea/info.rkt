@@ -4,6 +4,7 @@
 (define deps '("base"
                "component-lib"
                "db-lib"
+               "geoip-lib"
                "gregor-lib"
                "sql"
                "threading-lib"

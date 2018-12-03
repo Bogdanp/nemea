@@ -8,6 +8,7 @@
          "components/batcher.rkt"
          "components/current-visitors.rkt"
          "components/database.rkt"
+         "components/geolocator.rkt"
          "components/migrator.rkt"
          "components/reporter.rkt"
          (prefix-in config: "config.rkt")
@@ -28,6 +29,7 @@
                            #:database config:db-name
                            #:max-connections config:db-max-connections
                            #:max-idle-connections config:db-max-idle-connections)]
+  [geolocator make-geolocator]
   [migrator (database) make-migrator]
   [reporter (database) make-reporter]
   [server (app) (make-server #:listen-ip config:listen-ip
