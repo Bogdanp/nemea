@@ -29,7 +29,7 @@
   (define host (url-host url))
   (define port (or (url-port url) 80))
   (cond
-    [(= port 80) host]
+    [(= port 80)  host]
     [(= port 443) host]
     [else (~a host ":" port)]))
 
@@ -44,27 +44,23 @@
 
 (define (path/param->string path/param)
   (match (path/param-path path/param)
-    ['up ".."]
     ['same "."]
-    [path path]))
+    ['up   ".."]
+    [path  path]))
 
 (define (query->string query)
   (define params
     (for/list ([pair query])
       (match pair
-        [(cons name #f)
-         (uri-encode (symbol->string name))]
-
-        [(cons name value)
-         (~a (uri-encode (symbol->string name)) "=" (uri-encode value))])))
+        [(cons name #f)    (~a (uri-encode (symbol->string name)) "=")]
+        [(cons name value) (~a (uri-encode (symbol->string name)) "=" (uri-encode value))])))
 
   (cond
-    [(empty? params) ""]
+    [(null? params) ""]
     [else (~a "?" (string-join (sort params string<?) "&"))]))
 
 (define (fragment->string fragment)
-  (or (and fragment (~a "#" fragment))
-      ""))
+  (if fragment (~a "#" fragment) ""))
 
 
 (module+ test
@@ -80,5 +76,5 @@
   (check-equal? (url->canonical-path (string->url "http://example.com/./../a")) "/./../a")
   (check-equal? (url->canonical-path (string->url "http://example.com/./../a/")) "/./../a/")
   (check-equal? (url->canonical-path (string->url "http://example.com/hello?")) "/hello")
-  (check-equal? (url->canonical-path (string->url "http://example.com/hello?b=1&a")) "/hello?a&b=1")
-  (check-equal? (url->canonical-path (string->url "http://example.com/hello?b=1&a#foo=1;bar")) "/hello?a&b=1#foo=1;bar"))
+  (check-equal? (url->canonical-path (string->url "http://example.com/hello?b=1&a")) "/hello?a=&b=1")
+  (check-equal? (url->canonical-path (string->url "http://example.com/hello?b=1&a#foo=1;bar")) "/hello?a=&b=1#foo=1;bar"))
