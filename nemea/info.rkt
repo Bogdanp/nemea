@@ -6,6 +6,7 @@
                "db-lib"
                "geoip-lib"
                "gregor-lib"
+               "retry"
                "sql"
                "threading-lib"
                "https://github.com/racket/web-server.git?path=web-server-lib"))

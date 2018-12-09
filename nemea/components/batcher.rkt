@@ -4,12 +4,14 @@
          db
          db/util/postgresql
          gregor
+         gregor/period
          net/url
          racket/async-channel
          racket/contract/base
          racket/function
          racket/match
          racket/set
+         retry
          threading
          (prefix-in config: "../config.rkt")
          "database.rkt"
@@ -58,6 +60,15 @@
   (define date (today #:tz config:timezone))
   (async-channel-put (batcher-events batcher) (list date page-visit)))
 
+(define (log-exn-retryer)
+  (retryer #:handle (lambda (r n)
+                      (log-batcher-error "retrying error:\n~a\nattempt: ~a" (exn-message r) n))))
+
+(define upsert-retryer
+  (retryer-compose (cycle-retryer (sleep-exponential-retryer (seconds 1)) 8)
+                   (sleep-const-retryer/random (seconds 5))
+                   (log-exn-retryer)))
+
 (define ((make-listener batcher))
   (define timeout (* (batcher-timeout batcher) 1000))
   (define geolocator (batcher-geolocator batcher))
@@ -73,12 +84,12 @@
          (match event
            ['stop
             (log-batcher-debug "received 'stop")
-            (upsert-batch! batcher batch)
+            (call/retry upsert-retryer (lambda () (upsert-batch! batcher batch)))
             (void)]
 
            ['timeout
             (log-batcher-debug "received 'timeout")
-            (upsert-batch! batcher batch)
+            (call/retry upsert-retryer (lambda () (upsert-batch! batcher batch)))
             (loop (hash))]
 
            [(list d pv)
@@ -103,21 +114,19 @@
          (add1 visits))])
 
 (define (upsert-batch! batcher batch)
-  (with-handlers ([exn:fail? (lambda (e)
-                               (log-batcher-error "failed to upsert: ~a" (exn-message e)))])
-    (with-database-transaction [conn (batcher-database batcher)]
-      (for ([(grouping agg) (in-hash batch)])
-        (match-define (list visitors sessions visits) agg)
-        (query-exec conn UPSERT-BATCH-QUERY
-                    (date->sql-date (grouping-date grouping))
-                    (grouping-host grouping)
-                    (grouping-path grouping)
-                    (or (grouping-referrer-host grouping) "")
-                    (or (grouping-referrer-path grouping) "")
-                    (or (grouping-country-code grouping) "ZZ")
-                    visits
-                    (list->pg-array (set->list visitors))
-                    (list->pg-array (set->list sessions)))))))
+  (with-database-transaction [conn (batcher-database batcher)]
+    (for ([(grouping agg) (in-hash batch)])
+      (match-define (list visitors sessions visits) agg)
+      (query-exec conn UPSERT-BATCH-QUERY
+                  (date->sql-date (grouping-date grouping))
+                  (grouping-host grouping)
+                  (grouping-path grouping)
+                  (or (grouping-referrer-host grouping) "")
+                  (or (grouping-referrer-path grouping) "")
+                  (or (grouping-country-code grouping) "ZZ")
+                  visits
+                  (list->pg-array (set->list visitors))
+                  (list->pg-array (set->list sessions))))))
 
 (define UPSERT-BATCH-QUERY
   #<<SQL
