@@ -3,6 +3,7 @@
 (require net/url
          racket/function
          racket/set
+         racket/string
          threading
          web-server/http
          (prefix-in config: "../config.rkt")
@@ -40,9 +41,6 @@
          (bytes=? #"1")))
 
 (module+ test
-  (require rackunit
-           "utils-test.rkt")
-
   (check-false (do-not-track? (make-request)))
   (check-false (do-not-track? (make-request #:headers (list (make-header #"DNT" #"0")))))
   (check-true (do-not-track? (make-request #:headers (list (make-header #"DNT" #"1"))))))
@@ -56,9 +54,6 @@
             (set-member? config:spammers))))
 
 (module+ test
-  (require rackunit
-           "utils-test.rkt")
-
   (check-false (spammer? (make-request)))
   (check-false (spammer? (make-request #:path "/?ref=http://google.com")))
   (check-false (spammer? (make-request #:path "/?ref=this-isnt-even-valid")))
@@ -66,20 +61,32 @@
   (check-true (spammer? (make-request #:path "/?ref=http://nizniynovgorod.dienai.ru"))))
 
 
-(define (request->page-visit req)
-  ;; TODO: Handle x-forwarded-for.
-  (define client-ip (request-client-ip req))
-  (define query  (url-query (request-uri req)))
+(define (request-proxied-ip req)
+  (with-handlers ([exn:fail:contract? (const (request-client-ip req))]) ;; handle empty xff
+    (or (and~> (headers-assq* #"x-forwarded-for" (request-headers/raw req))
+               (header-value)
+               (bytes->string/utf-8)
+               (string-split _ "," #:repeat? #f)
+               (car))
+        (request-client-ip req))))
 
+(module+ test
+  (check-equal? (request-proxied-ip (make-request)) "127.0.0.1")
+  (check-equal? (request-proxied-ip (make-request #:headers (list (make-header #"x-forwarded-for" #"80.97.145.32, 127.0.0.1")))) "80.97.145.32")
+  (check-equal? (request-proxied-ip (make-request #:headers (list (make-header #"x-forwarded-for" #"")))) "127.0.0.1"))
+
+
+(define (request->page-visit req)
   (with-handlers ([exn:fail? (lambda (e)
                                (raise (exn:bad-request
                                        "uid, sid, loc and cts parameters are required"
                                        (current-continuation-marks))))])
+    (define query  (url-query (request-uri req)))
     (page-visit (assq* 'uid query)
                 (assq* 'sid query)
                 (string->url (assq* 'loc query))
                 (and~> (assq* 'ref query) (string->url))
-                client-ip)))
+                (request-proxied-ip req))))
 
 (module+ test
   (require rackunit
