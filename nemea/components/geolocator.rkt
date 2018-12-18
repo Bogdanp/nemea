@@ -4,6 +4,7 @@
          geoip
          (for-syntax racket/base)
          racket/contract/base
+         racket/function
          racket/runtime-path
          threading)
 
@@ -28,8 +29,8 @@
 
 (define (geolocator-country-code geolocator ip)
   (and~> (geoip-lookup (geolocator-db geolocator) ip)
-         (hash-ref "country")
-         (hash-ref "iso_code")))
+         (hash-ref "country" #f)
+         (hash-ref "iso_code" #f)))
 
 (module+ test
   (require rackunit)
