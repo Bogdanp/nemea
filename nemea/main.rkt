@@ -65,5 +65,5 @@
   (system-start prod-system)
   (with-handlers ([exn:break? (lambda (e)
                                 (system-stop prod-system)
-                                (sleep 1))])
+                                (sync/enable-break (system-idle-evt)))])
     (sync/enable-break never-evt)))
