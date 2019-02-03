@@ -45,14 +45,10 @@
      [("track") (track-page-visit batcher current-visitors)]
      [("v0" "visitors-stream") (get-current-visitors current-visitors)]
      [("v0" "reports" "daily") (get-daily-report reporter)]
-     [else not-found]))
+     [else (next-dispatcher)]))
 
   (app (sequencer:make
-        file-server
         (dispatch/servlet
          (~> dispatch
-             wrap-custom-exns)))))
-
-(define (not-found req)
-  (response/json #:code 404
-                 #:body (hasheq 'error "not found")))
+             wrap-custom-exns))
+        file-server)))
