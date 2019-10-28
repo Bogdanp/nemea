@@ -117,9 +117,9 @@
   }
 
   commands.view = function() {
-    if (navigator.doNotTrack) {
-      return;
-    }
+    // if (navigator.doNotTrack) {
+    //   return;
+    // }
 
     var script = document.getElementById("nemea");
     var trackURL = script.src.replace("track.js", "track");

@@ -44,6 +44,10 @@
       <top-pages :breakdown="report['pages-breakdown']"></top-pages>
       <top-referrers :breakdown="report['referrers-breakdown']"></top-referrers>
     </div>
+
+    <div class="reports reports--wide">
+      <live-locations :locations="liveLocations"></live-locations>
+    </div>
   </div>
 </template>
 
@@ -55,6 +59,8 @@
   import { makeTimeseriesOptions } from "../lib/charts.js";
 
   import Card from "../components/Card.vue";
+  import LiveLocations from "../components/LiveLocations.vue";
+
   import TopPages from "../components/TopPages.vue";
   import TopReferrers from "../components/TopReferrers.vue";
   import TotalsBox from "../components/TotalsBox.vue";
@@ -87,6 +93,7 @@
     name: "Dashboard",
     components: {
       Card,
+      LiveLocations,
       TopPages,
       TopReferrers,
       TotalsBox,
@@ -116,6 +123,7 @@
           ["referrers-breakdown"]: [],
         },
 
+        liveLocations: [],
         onlineVisiors: 0,
         onlineVisitorsByMinute: onlineVisitorsByMinute,
         onlineVisitorsTimeseries: [],
@@ -129,11 +137,14 @@
         });
 
       this._visitorCountChanged = this.visitorCountChanged.bind(this);
-      visitorTracker.addListener(this._visitorCountChanged);
+      this._visitorLocationsChanged = this.visitorLocationsChanged.bind(this);
+      visitorTracker.addListener("count", this._visitorCountChanged);
+      visitorTracker.addListener("locations", this._visitorLocationsChanged);
     },
 
     beforeDestroy() {
-      visitorTracker.removeListener(this._visitorCountChanged);
+      visitorTracker.removeListener("count", this._visitorCountChanged);
+      visitorTracker.removeListener("locations", this._visitorLocationsChanged);
     },
 
     computed: {
@@ -288,6 +299,10 @@
           this.onlineVisitorsTimeseries = timeseries;
         }
       },
+
+      visitorLocationsChanged(locations) {
+        this.liveLocations = locations;
+      }
     },
   };
 </script>
@@ -330,6 +345,10 @@
     .reports {
       column-gap: 1rem;
       grid-template-columns: 1fr 1fr;
+    }
+
+    .reports--wide {
+      grid-template-columns: 1fr;
     }
   }
 </style>

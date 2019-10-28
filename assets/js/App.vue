@@ -42,7 +42,7 @@
       }
 
       const initialTitle = document.title;
-      visitorTracker.addListener((visitors) => {
+      visitorTracker.addListener("count", (visitors) => {
         if (visitors > 1) {
           document.title = `${visitors} visitors online :: ${initialTitle}`;
         } else if (visitors === 1) {

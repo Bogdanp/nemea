@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require component
+         net/url
          racket/contract
          racket/list
          racket/match
@@ -13,7 +14,7 @@
                                       (#:session-timeout exact-positive-integer?)
                                       current-visitors?)]
           [current-visitors-subscribe (-> current-visitors? thread? void?)]
-          [current-visitors-track (-> current-visitors? string? void?)]))
+          [current-visitors-track (-> current-visitors? string? url? void?)]))
 
 (struct current-visitors (session-timeout (manager-thread #:mutable))
   #:methods gen:component
@@ -45,22 +46,25 @@
            ['broadcast
             (define deadline (- (current-seconds) session-timeout))
             (define active-visitors
-              (for/hash ([(visitor-id timestamp) (in-hash visitors)] #:unless (< timestamp deadline))
-                (values visitor-id timestamp)))
+              (for*/hash ([(visitor-id data) (in-hash visitors)]
+                          [timestamp (in-value (car data))]
+                          #:unless (< timestamp deadline))
+                (values visitor-id data)))
 
-            (define active-listeners (filter-not thread-dead? (set->list listeners)))
-            (for ([listener active-listeners])
-              (thread-send listener (hash-count active-visitors)))
+            (define active-listeners
+              (for/set ([listener (in-set listeners)] #:unless (thread-dead? listener))
+                (begin0 listener
+                  (thread-send listener active-visitors))))
 
-            (loop active-visitors (list->set active-listeners))]
+            (loop active-visitors active-listeners)]
 
            [(list 'subscribe t)
-            (thread-send t (hash-count visitors))
+            (thread-send t visitors)
             (loop visitors (set-add listeners t))]
 
-           [(list 'track visitor-id)
+           [(list 'track visitor-id location)
             (thread-send (current-thread) 'broadcast)
-            (loop (hash-set visitors visitor-id (current-seconds)) listeners)])))
+            (loop (hash-set visitors visitor-id (cons (current-seconds) location)) listeners)])))
 
       (handle-evt
        (alarm-evt (+ (current-inexact-milliseconds) 1000))
@@ -72,9 +76,9 @@
   (thread-send (current-visitors-manager-thread current-visitors)
                (list 'subscribe listener)))
 
-(define (current-visitors-track current-visitors visitor-id)
+(define (current-visitors-track current-visitors visitor-id location)
   (thread-send (current-visitors-manager-thread current-visitors)
-               (list 'track visitor-id)))
+               (list 'track visitor-id location)))
 
 (module+ test
   (require rackunit
@@ -84,11 +88,13 @@
   (define cv (make-current-visitors #:session-timeout 2))
 
   (define counts '())
-  (define t1 (thread (lambda ()
-                       (let loop ()
-                         (set! counts (cons (thread-receive) counts))
-                         (semaphore-post waiter)
-                         (loop)))))
+  (define t1
+    (thread
+     (lambda ()
+       (let loop ()
+         (set! counts (cons (hash-count (thread-receive)) counts))
+         (semaphore-post waiter)
+         (loop)))))
 
   (run-tests
    (test-suite
@@ -106,8 +112,8 @@
       (sync/timeout 2 waiter)
       (check-equal? counts '(0) "timeout after none tracked")
 
-      (current-visitors-track cv "alice")
-      (current-visitors-track cv "bob")
+      (current-visitors-track cv "alice" (string->url "http://example.com"))
+      (current-visitors-track cv "bob" (string->url "http://example.com"))
       (sync/timeout 2 waiter) ; broadcast for alice
       (sync/timeout 2 waiter) ; broadcast for bob
       (sync/timeout 2 waiter) ; timeout
@@ -116,7 +122,7 @@
       (sync/timeout 2 waiter) ; timeout
       (check-equal? counts '(2 2 2 2 0) "timeout after alice and bob tracked no. 2")
 
-      (current-visitors-track cv "bob")
+      (current-visitors-track cv "bob" (string->url "http://example.com"))
       (sync/timeout 2 waiter) ; broadcast for bob
       (sync/timeout 2 waiter) ; timeout
       (check-equal? counts '(1 2 2 2 2 2 0) "timeout after bob tracked again")

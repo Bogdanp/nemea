@@ -19,7 +19,9 @@
 (define ((track-page-visit batcher current-visitors) req)
   (when (track? req)
     (define page-visit (request->page-visit req))
-    (current-visitors-track current-visitors (page-visit-unique-id page-visit))
+    (current-visitors-track current-visitors
+                            (page-visit-unique-id page-visit)
+                            (page-visit-location page-visit))
     (enqueue batcher page-visit))
   (response/pixel))
 

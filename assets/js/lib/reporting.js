@@ -20,30 +20,38 @@ export const visitorTracker = {
   _tracker: null,
   _listeners: [],
 
-  addListener(onUpdate) {
+  addListener(event, listener) {
     if (!this._tracker) {
       this._tracker = initCurrentVisitorsTracker(this.dispatch.bind(this));
     }
 
-    this._listeners.push(onUpdate);
+    this._listeners.push([event, listener]);
   },
 
-  removeListener(onUpdate) {
-    this._listeners.splice(this._listeners.indexOf(onUpdate), 1);
+  removeListener(event, listener) {
+    this._listeners.splice(this._listeners.indexOf([event, listener]), 1);
   },
 
-  dispatch(visitors) {
-    this._listeners.forEach(f => f(visitors));
+  dispatch(event, data) {
+    this._listeners.forEach(([e, f]) => {
+      if (e === event) {
+        f(data);
+      }
+    });
   }
 };
 
-function initCurrentVisitorsTracker(onUpdate) {
+function initCurrentVisitorsTracker(dispatch) {
   const source = new EventSource("/v0/visitors-stream", {
     withCredentials: true
   });
 
-  source.addEventListener("tick", e => {
-    onUpdate(Number(e.data));
+  source.addEventListener("count", e => {
+    dispatch("count", Number(e.data));
+  });
+
+  source.addEventListener("locations", e => {
+    dispatch("locations", JSON.parse(e.data));
   });
 
   return source;

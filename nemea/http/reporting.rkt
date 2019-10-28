@@ -1,8 +1,11 @@
 #lang racket/base
 
 (require gregor
+         json
          net/url
          racket/contract
+         racket/list
+         racket/string
          web-server/http
          "../components/current-visitors.rkt"
          "../components/reporter.rkt"
@@ -19,8 +22,15 @@
      (current-visitors-subscribe cv (current-thread))
      (parameterize ([current-output-port out])
        (let loop ()
-         (printf "event: tick\n")
-         (printf "data: ~v\n\n" (thread-receive))
+         (define visitors (thread-receive))
+         (printf "event: count\n")
+         (printf "data: ~a\n\n" (hash-count visitors))
+         (printf "event: locations\n")
+         (printf "data: ~a\n\n" (jsexpr->string
+                                 (remove-duplicates
+                                  (for*/list ([(_ data) (in-hash visitors)]
+                                              [location (in-value (cdr data))])
+                                    (url->string location)))))
          (loop))))))
 
 (define ((get-daily-report reporter) req)
