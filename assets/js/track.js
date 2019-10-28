@@ -131,11 +131,7 @@
     }
 
     var img = document.createElement("img");
-    document.body.appendChild(img);
     img.src = addURLParams(trackURL, collectData());
-    img.onload = function() {
-      document.body.removeChild(img);
-    };
   };
 
   function call() {
