@@ -15,7 +15,7 @@ RUN pip install -U pip \
   && pip install whitenoise[brotli] \
   && python -m whitenoise.compress static
 
-FROM jackfirth/racket:7.1 AS distribution
+FROM jackfirth/racket:7.4-full AS distribution
 
 ADD . /opt/nemea
 WORKDIR /opt/nemea
