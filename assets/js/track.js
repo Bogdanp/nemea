@@ -117,12 +117,18 @@
   }
 
   commands.view = function() {
-    // if (navigator.doNotTrack) {
-    //   return;
-    // }
+    if (navigator.doNotTrack) {
+      return;
+    }
 
-    var script = document.getElementById("nemea");
-    var trackURL = script.src.replace("track.js", "track");
+    var trackURL = window.nemea.trackURL;
+    if (trackURL === undefined) {
+      var script = document.getElementById("nemea");
+      trackURL = window.nemea.trackURL = script.src.replace(
+        "track.js",
+        "track"
+      );
+    }
 
     var img = document.createElement("img");
     img.src = addURLParams(trackURL, collectData());
