@@ -38,34 +38,13 @@ export const visitorTracker = {
 };
 
 function initCurrentVisitorsTracker(onUpdate) {
-  return fetch("/v0/visitors-stream", {
-    credentials: "same-origin"
-  })
-    .then(stream)
-    .then(restart);
+  const source = new EventSource("/v0/visitors-stream", {
+    withCredentials: true
+  });
 
-  function stream(response) {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    return readChunk();
+  source.addEventListener("tick", e => {
+    onUpdate(Number(e.data));
+  });
 
-    function readChunk() {
-      return reader.read().then(chunk => {
-        if (chunk.done) {
-          return;
-        }
-
-        const data = decoder.decode(chunk.value || new Uint8Array(), {
-          stream: !chunk.done
-        });
-
-        onUpdate(data * 1);
-        return readChunk();
-      });
-    }
-  }
-
-  function restart() {
-    return initCurrentVisitorsTracker(onUpdate);
-  }
+  return source;
 }

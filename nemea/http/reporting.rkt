@@ -14,13 +14,14 @@
 
 (define ((get-current-visitors cv) req)
   (response/output
+   #:mime-type #"text/event-stream"
    (lambda (out)
      (current-visitors-subscribe cv (current-thread))
-     (let loop ()
-       (define visitors (thread-receive))
-       (define data (string->bytes/utf-8 (number->string visitors)))
-       (write-bytes (bytes-append data #"\n") out)
-       (loop)))))
+     (parameterize ([current-output-port out])
+       (let loop ()
+         (printf "event: tick\n")
+         (printf "data: ~v\n\n" (thread-receive))
+         (loop))))))
 
 (define ((get-daily-report reporter) req)
   (define query (url-query (request-uri req)))
