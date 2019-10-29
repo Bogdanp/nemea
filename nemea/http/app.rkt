@@ -1,7 +1,8 @@
 #lang racket/base
 
-(require component
-         (for-syntax racket)
+(require (for-syntax racket/base)
+         component
+         koyo/mime
          racket/contract
          racket/runtime-path
          threading
@@ -10,7 +11,6 @@
          (prefix-in files: web-server/dispatchers/dispatch-files)
          (prefix-in sequencer: web-server/dispatchers/dispatch-sequencer)
          web-server/dispatchers/filesystem-map
-         web-server/http
          web-server/servlet-dispatch
          "../components/batcher.rkt"
          "../components/current-visitors.rkt"
@@ -19,8 +19,7 @@
          "../components/reporter.rkt"
          "middleware.rkt"
          "reporting.rkt"
-         "tracking.rkt"
-         "utils.rkt")
+         "tracking.rkt")
 
 (provide
  make-app

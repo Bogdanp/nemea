@@ -7,10 +7,10 @@
                "db-lib"
                "geoip-lib"
                "gregor-lib"
-               "koyo-lib"
+               "https://github.com/Bogdanp/koyo.git?path=koyo-lib"
                "retry"
                "sql"
                "threading-lib"
-               "https://github.com/racket/web-server.git?path=web-server-lib"))
+               "web-server-lib"))
 (define build-deps '("at-exp-lib"
                      "rackunit-lib"))
