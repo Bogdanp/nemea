@@ -1,2 +1,0 @@
-honcho
-whitenoise[brotli]

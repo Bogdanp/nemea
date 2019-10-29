@@ -2,6 +2,7 @@
 
 (define collection "nemea")
 (define deps '("base"
+               "chief"
                "component-lib"
                "db-lib"
                "geoip-lib"

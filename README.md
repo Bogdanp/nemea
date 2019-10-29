@@ -10,8 +10,6 @@ Take control of your website analytics!
 
 nemea is a [Racket] application so you'll need to install that and
 you'll need [Node.js] version `10.6.0` to build the static assets.
-Optionally, you'll need [Python] for the development process manager
-(honcho) and the asset compressor.
 
 You'll also need a running [PostgreSQL] instance.
 
@@ -21,8 +19,7 @@ Install all the prerequisites:
 
     $ raco pkg install nemea/
     $ npm install
-    $ pip install -r requirements.txt
-    $ cp .env.default .env.dev
+    $ cp .env.default .env
 
 Set up the databases:
 
@@ -38,7 +35,7 @@ Set up the databases:
 
 ### Running the development server
 
-    $ honcho -e .env.dev -f Procfile.dev
+    $ raco chief start
 
 ### Running the tests
 
@@ -51,6 +48,5 @@ Set up the databases:
 
 
 [Racket]: https://racket-lang.org
-[Python]: https://python.org
 [Node.js]: https://nodejs.org
 [PostgreSQL]: https://www.postgresql.org
