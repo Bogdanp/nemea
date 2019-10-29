@@ -7,6 +7,7 @@
                "db-lib"
                "geoip-lib"
                "gregor-lib"
+               "koyo-lib"
                "retry"
                "sql"
                "threading-lib"

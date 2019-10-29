@@ -22,8 +22,7 @@ WORKDIR /opt/nemea
 COPY --from=asset_compression /opt/nemea/static /opt/nemea/static
 RUN raco pkg install --auto nemea/ \
   && raco setup -D --tidy --check-pkg-deps --unused-pkg-deps --pkgs nemea \
-  && raco exe -o nemea.bin nemea/main.rkt \
-  && raco distribute dist nemea.bin
+  && raco koyo dist
 
 FROM debian
 
@@ -31,4 +30,4 @@ COPY --from=distribution /opt/nemea/dist /opt/nemea
 WORKDIR /opt/nemea
 EXPOSE 8000
 
-CMD ["/opt/nemea/bin/nemea.bin"]
+CMD ["/opt/nemea/bin/nemea"]

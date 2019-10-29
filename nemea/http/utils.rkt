@@ -44,15 +44,15 @@
            (bytes->jsexpr))))
 
 (module+ test
-  (require rackunit
-           "utils-test.rkt")
+  (require koyo/testing
+           rackunit)
 
   (check-equal?
-   (request/json (make-request #:content "invalid"))
+   (request/json (make-test-request #:content "invalid"))
    #f)
 
   (check-equal?
-   (request/json (make-request #:content "{\"x\": 42}"))
+   (request/json (make-test-request #:content "{\"x\": 42}"))
    (hasheq 'x 42)))
 
 

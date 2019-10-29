@@ -30,11 +30,11 @@
            (spammer? req))))
 
 (module+ test
-  (require rackunit
-           "utils-test.rkt")
+  (require koyo/testing
+           rackunit)
 
-  (check-true (track? (make-request)))
-  (check-false (track? (make-request #:headers (list (make-header #"DNT" #"1"))))))
+  (check-true (track? (make-test-request)))
+  (check-false (track? (make-test-request #:headers (list (make-header #"DNT" #"1"))))))
 
 
 (define (do-not-track? req)
@@ -43,9 +43,9 @@
          (bytes=? #"1")))
 
 (module+ test
-  (check-false (do-not-track? (make-request)))
-  (check-false (do-not-track? (make-request #:headers (list (make-header #"DNT" #"0")))))
-  (check-true (do-not-track? (make-request #:headers (list (make-header #"DNT" #"1"))))))
+  (check-false (do-not-track? (make-test-request)))
+  (check-false (do-not-track? (make-test-request #:headers (list (make-header #"DNT" #"0")))))
+  (check-true (do-not-track? (make-test-request #:headers (list (make-header #"DNT" #"1"))))))
 
 
 (define (spammer? req)
@@ -56,11 +56,11 @@
             (set-member? config:spammers))))
 
 (module+ test
-  (check-false (spammer? (make-request)))
-  (check-false (spammer? (make-request #:path "/?ref=http://google.com")))
-  (check-false (spammer? (make-request #:path "/?ref=this-isnt-even-valid")))
-  (check-false (spammer? (make-request #:path "/?ref=dienai.ru")))
-  (check-true (spammer? (make-request #:path "/?ref=http://nizniynovgorod.dienai.ru"))))
+  (check-false (spammer? (make-test-request)))
+  (check-false (spammer? (make-test-request #:query '((ref . "http://google.com")))))
+  (check-false (spammer? (make-test-request #:query '((ref . "this-isnt-even-valid")))))
+  (check-false (spammer? (make-test-request #:query '((ref . "dienai.ru")))))
+  (check-true (spammer? (make-test-request #:query '((ref . "http://nizniynovgorod.dienai.ru"))))))
 
 
 (define (request-proxied-ip req)
@@ -73,9 +73,9 @@
         (request-client-ip req))))
 
 (module+ test
-  (check-equal? (request-proxied-ip (make-request)) "127.0.0.1")
-  (check-equal? (request-proxied-ip (make-request #:headers (list (make-header #"x-forwarded-for" #"80.97.145.32, 127.0.0.1")))) "80.97.145.32")
-  (check-equal? (request-proxied-ip (make-request #:headers (list (make-header #"x-forwarded-for" #"")))) "127.0.0.1"))
+  (check-equal? (request-proxied-ip (make-test-request)) "127.0.0.1")
+  (check-equal? (request-proxied-ip (make-test-request #:headers (list (make-header #"x-forwarded-for" #"80.97.145.32, 127.0.0.1")))) "80.97.145.32")
+  (check-equal? (request-proxied-ip (make-test-request #:headers (list (make-header #"x-forwarded-for" #"")))) "127.0.0.1"))
 
 
 (define (request->page-visit req)
@@ -91,11 +91,11 @@
                 (request-proxied-ip req))))
 
 (module+ test
-  (require rackunit
-           "utils-test.rkt")
-
   (check-equal?
-   (request->page-visit (make-request #:path "/?uid=1&sid=2&loc=http%3A%2F%2Fexample.com&ref=http%3A%2F%2Fgoogle.com"))
+   (request->page-visit (make-test-request #:query '((uid . "1")
+                                                     (sid . "2")
+                                                     (loc . "http://example.com")
+                                                     (ref . "http://google.com"))))
    (page-visit "1"
                "2"
                (string->url "http://example.com")

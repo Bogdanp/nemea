@@ -22,23 +22,26 @@
          "tracking.rkt"
          "utils.rkt")
 
-(provide (contract-out
-          [struct app ((dispatcher dispatcher/c))]
-          [make-app (-> database? migrator? batcher? current-visitors? reporter? app?)]))
+(provide
+ make-app
+ app?
+ app-dispatcher)
 
 (define-runtime-path static-path
   (build-path 'up 'up "static"))
 
+(define static-dispatcher
+  (files:make
+   #:url->path (make-url->path static-path)
+   #:path->mime-type path->mime-type))
+
 (struct app (dispatcher)
   #:methods gen:component
-  [(define (component-start app) app)
-   (define (component-stop app) app)])
+  [(define component-start values)
+   (define component-stop values)])
 
-(define (make-app database migrator batcher current-visitors reporter)
-  (define file-server
-    (files:make
-     #:url->path (make-url->path static-path)
-     #:path->mime-type path->mime-type))
+(define/contract (make-app database migrator batcher current-visitors reporter)
+  (-> database? migrator? batcher? current-visitors? reporter? app?)
 
   (define-values (dispatch _)
     (dispatch-rules
@@ -51,4 +54,4 @@
         (dispatch/servlet
          (~> dispatch
              wrap-custom-exns))
-        file-server)))
+        static-dispatcher)))
