@@ -7,7 +7,7 @@
     "babel-preset-env": "^1.7.0",
     "eslint": "^5.8.0",
     "eslint-plugin-vue": "^5.0.0-beta.3",
-    "parcel-bundler": "^1.10.3",
+    "parcel-bundler": "^1.12.4",
     "prettier": "^1.14.3",
     "sass": "^1.14.3",
     "system-font-css": "^2.0.2",
