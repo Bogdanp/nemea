@@ -1,7 +1,8 @@
 #lang racket/base
 
 (require component
-         (only-in db postgresql-connect)
+         (only-in db
+                  postgresql-connect)
          koyo/database
          koyo/logging
          koyo/server
@@ -35,10 +36,11 @@
   [geolocator make-geolocator]
   [migrator (database) make-migrator]
   [reporter (database) make-reporter]
-  [server (app) (compose1 (make-server-factory #:host config:listen-ip
-                                               #:port config:port)
-                          app-dispatcher)])
-
+  [server (app) (compose1
+                 (make-server-factory
+                  #:host config:host
+                  #:port config:port)
+                 app-dispatcher)])
 
 (define (start)
   (define stop-logger

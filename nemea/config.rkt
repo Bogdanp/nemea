@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require gregor
+         koyo/config
          net/url
          (for-syntax racket)
          racket/list
@@ -9,37 +10,58 @@
          racket/set
          racket/string)
 
-(provide (all-defined-out))
+(current-option-name-prefix "NEMEA")
 
-(define hostname (or (getenv "NEMEA_HOSTNAME") "127.0.0.1"))
+(define-option hostname
+  #:default "127.0.0.1")
 
-(define listen-ip (or (getenv "NEMEA_LISTEN_IP") "127.0.0.1"))
-(define port (string->number (or (getenv "NEMEA_PORT")
-                                 (getenv "PORT")
-                                 "8000")))
+(define-option host
+  #:default "127.0.0.1")
 
-(define timezone (or (getenv "NEMEA_TIMEZONE") (current-timezone)))
+(define-option port
+  #:default "8000"
+  (string->number port))
 
-(define db-url (string->url (or (getenv "NEMEA_DATABASE_URL")
-                                (getenv "DATABASE_URL")
-                                "postgres://nemea:nemea@127.0.0.1/nemea")))
+(define-option timezone
+  #:default (current-timezone))
 
-(define db-username (car (string-split (url-user db-url) ":")))
-(define db-password (cadr (string-split (url-user db-url) ":")))
-(define db-host (url-host db-url))
-(define db-port (or (url-port db-url) 5432))
-(define db-name (path/param-path (car (url-path db-url))))
+(define-option database-url
+  #:default "postgres://nemea:nemea@127.0.0.1/nemea"
+  (string->url database-url))
 
-(define db-max-connections (string->number (or (getenv "NEMEA_DB_MAX_CONNECTIONS") "16")))
-(define db-max-idle-connections (string->number (or (getenv "NEMEA_DB_MAX_IDLE_CONNECTIONS") "2")))
+(define-syntax-rule (define/provide name e ...)
+  (begin
+    (define name e ...)
+    (provide name)))
 
-(define batcher-channel-size (string->number (or (getenv "NEMEA_BATCHER_CHANNEL_SIZE") "1000000")))
-(define batcher-timeout (string->number (or (getenv "NEMEA_BATCHER_TIMEOUT") "30")))
+(define/provide db-username (car (string-split (url-user database-url) ":")))
+(define/provide db-password (cadr (string-split (url-user database-url) ":")))
+(define/provide db-host (url-host database-url))
+(define/provide db-port (or (url-port database-url) 5432))
+(define/provide db-name (path/param-path (car (url-path database-url))))
 
-(define log-level (string->symbol (or (getenv "NEMEA_LOG_LEVEL") "info")))
+(define-option db-max-connections
+  #:default "16"
+  (string->number db-max-connections))
+
+(define-option db-max-idle-connections
+  #:default "2"
+  (string->number db-max-idle-connections))
+
+(define-option batcher-channel-size
+  #:default "1000000"
+  (string->number batcher-channel-size))
+
+(define-option batcher-timeout
+  #:default "15"
+  (string->number batcher-timeout))
+
+(define-option log-level
+  #:default "info"
+  (string->symbol log-level))
 
 (define-runtime-path spammers-file-path (build-path 'up "assets" "data" "spammers.txt"))
-(define spammers
+(define/provide spammers
   (call-with-input-file spammers-file-path
     (lambda (in)
       (list->set
