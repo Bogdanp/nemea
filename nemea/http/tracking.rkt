@@ -57,16 +57,25 @@
         (request-client-ip req))))
 
 (define (request->page-visit req)
-  (with-handlers ([exn:fail? (lambda (e)
-                               (bad-request "uid, sid, loc and cts parameters are required"))])
-    (define bindings (request-bindings/raw req))
-    (page-visit (bindings-ref bindings 'uid)
-                (bindings-ref bindings 'sid)
-                (string->url (bindings-ref bindings 'loc))
-                (cond
-                  [(bindings-ref bindings 'ref) => string->url]
-                  [else #f])
-                (request-proxied-ip req))))
+  (define bindings
+    (request-bindings/raw req))
+
+  (page-visit
+   (or (bindings-ref bindings 'uid)
+       (bad-request "uid parameter is required"))
+   (or (bindings-ref bindings 'sid)
+       (bad-request "sid parameter is required"))
+   (or (and~> (bindings-ref bindings 'loc)
+              (string->url))
+       (bad-request "loc parameter is required"))
+   (cond
+     [(bindings-ref bindings 'ref)
+      => (lambda (ref)
+           (cond
+             [(string=? ref "") #f]
+             [else (string->url ref)]))]
+     [else #f])
+   (request-proxied-ip req)))
 
 (module+ test
   (require koyo/testing

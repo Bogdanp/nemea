@@ -2,20 +2,20 @@
 
 (require component
          db
+         koyo/database
          gregor
          gregor/period
          racket/contract
          racket/list
          racket/match
          racket/math
-         sql
-         "database.rkt"
-         "utils.rkt")
+         sql)
 
-(provide (contract-out
-          [struct reporter ((database database?))]
-          [make-reporter (-> database? reporter?)]
-          [make-daily-report (-> reporter? date? date? hash?)]))
+(provide
+ (contract-out
+  [struct reporter ((database database?))]
+  [make-reporter (-> database? reporter?)]
+  [make-daily-report (-> reporter? date? date? hash?)]))
 
 (struct reporter (database)
   #:methods gen:component
@@ -29,8 +29,8 @@
                            #:top-pages-limit [top-pages-limit 10]
                            #:top-referrers-limit [top-referrers-limit 10])
 
-  (define sql-start-date (date->sql-date start-date))
-  (define sql-end-date (date->sql-date end-date))
+  (define sql-start-date (->sql-date start-date))
+  (define sql-end-date (->sql-date end-date))
 
   (define (get-totals conn)
     (match (query-row conn (select (as (coalesce (sum visits) 0) visits)
@@ -48,21 +48,21 @@
   (define (get-timeseries conn)
     (define days-in-range (period-ref (period-between start-date end-date '(days)) 'days))
     (define start-date-string (~t start-date "YYYY-MM-dd"))
-    (define sql-start-date (date->sql-date (-days start-date days-in-range)))
-    (define sql-end-date (date->sql-date end-date))
+    (define sql-start-date (->sql-date (-days start-date days-in-range)))
+    (define sql-end-date (->sql-date end-date))
 
     (define timeseries
       (for/list ([(date visits visitors sessions)
-                  (in-query conn (select date
-                                         (as (coalesce (sum visits) 0) visits)
-                                         (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
-                                         (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
-                                         #:from page_visits
-                                         #:where (and (>= date ,sql-start-date)
-                                                      (<  date ,sql-end-date))
-                                         #:group-by date
-                                         #:order-by date #:asc))])
-        (hasheq 'date (~t (sql-date->moment date) "YYYY-MM-dd")
+                  (in-rows conn (select date
+                                        (as (coalesce (sum visits) 0) visits)
+                                        (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
+                                        (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
+                                        #:from page_visits
+                                        #:where (and (>= date ,sql-start-date)
+                                                     (<  date ,sql-end-date))
+                                        #:group-by date
+                                        #:order-by date #:asc))])
+        (hasheq 'date (~t date "YYYY-MM-dd")
                 'visits visits
                 'visitors (exact-floor visitors)
                 'sessions (exact-floor sessions))))
@@ -77,16 +77,16 @@
 
   (define (get-pages-breakdown conn)
     (for/list ([(host path visits visitors sessions)
-                (in-query conn (select host path
-                                       (as (coalesce (sum visits) 0) visits)
-                                       (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
-                                       (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
-                                       #:from page_visits
-                                       #:where (and (>= date ,sql-start-date)
-                                                    (<  date ,sql-end-date))
-                                       #:group-by host path
-                                       #:order-by visits #:desc
-                                       #:limit ,top-pages-limit))])
+                (in-rows conn (select host path
+                                      (as (coalesce (sum visits) 0) visits)
+                                      (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
+                                      (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
+                                      #:from page_visits
+                                      #:where (and (>= date ,sql-start-date)
+                                                   (<  date ,sql-end-date))
+                                      #:group-by host path
+                                      #:order-by visits #:desc
+                                      #:limit ,top-pages-limit))])
 
       (hasheq 'host host
               'path path
@@ -97,17 +97,17 @@
 
   (define (get-referrers-breakdown conn)
     (for/list ([(referrer_host referrer_path visits visitors sessions)
-                (in-query conn (select referrer_host referrer_path
-                                       (as (coalesce (sum visits) 0) visits)
-                                       (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
-                                       (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
-                                       #:from page_visits
-                                       #:where (and (not (= referrer_host ""))
-                                                    (>= date ,sql-start-date)
-                                                    (<  date ,sql-end-date))
-                                       #:group-by referrer_host referrer_path
-                                       #:order-by visits #:desc
-                                       #:limit ,top-referrers-limit))])
+                (in-rows conn (select referrer_host referrer_path
+                                      (as (coalesce (sum visits) 0) visits)
+                                      (as (coalesce (hll_cardinality (hll_union_agg visitors)) 0) visitors)
+                                      (as (coalesce (hll_cardinality (hll_union_agg sessions)) 0) sessions)
+                                      #:from page_visits
+                                      #:where (and (not (= referrer_host ""))
+                                                   (>= date ,sql-start-date)
+                                                   (<  date ,sql-end-date))
+                                      #:group-by referrer_host referrer_path
+                                      #:order-by visits #:desc
+                                      #:limit ,top-referrers-limit))])
 
       (hasheq 'host referrer_host
               'path referrer_path
@@ -131,9 +131,12 @@
            "migrator.rkt")
 
   (define-system test
-    [database (make-database #:database "nemea_tests"
-                             #:username "nemea"
-                             #:password "nemea")]
+    [database (make-database-factory
+               (lambda _
+                 (postgresql-connect
+                  #:database "nemea_tests"
+                  #:user     "nemea"
+                  #:password "nemea")))]
     [migrator (database) make-migrator]
     [reporter (database) make-reporter])
 

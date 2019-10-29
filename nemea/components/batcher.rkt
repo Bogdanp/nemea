@@ -5,7 +5,7 @@
          db/util/postgresql
          gregor
          gregor/period
-         net/url
+         koyo/database
          racket/async-channel
          racket/contract/base
          racket/function
@@ -14,28 +14,28 @@
          retry
          threading
          (prefix-in config: "../config.rkt")
-         "database.rkt"
          "geolocator.rkt"
-         "page-visit.rkt"
-         "utils.rkt")
+         "page-visit.rkt")
 
-(provide (contract-out
-          [struct batcher ((database database?)
-                           (geolocator geolocator?)
-                           (events async-channel?)
-                           (timeout exact-positive-integer?)
-                           (listener-thread (or/c false/c thread?)))]
+(provide
+ (contract-out
+  [struct batcher ([database database?]
+                   [geolocator geolocator?]
+                   [events async-channel?]
+                   [timeout exact-positive-integer?]
+                   [listener-thread (or/c false/c thread?)])]
 
-          [make-batcher (->* ()
-                             (#:channel-size exact-positive-integer?
-                              #:timeout exact-positive-integer?)
-                             (-> database? geolocator? batcher?))]
+  [make-batcher (->* ()
+                     (#:channel-size exact-positive-integer?
+                      #:timeout exact-positive-integer?)
+                     (-> database? geolocator? batcher?))]
 
-          [enqueue (-> batcher? page-visit? void?)]))
+  [enqueue (-> batcher? page-visit? void?)]))
 
 (define-logger batcher)
 
 (struct batcher (database geolocator events timeout listener-thread)
+  #:property prop:evt (struct-field-index listener-thread)
   #:methods gen:component
   [(define (component-start a-batcher)
      (log-batcher-debug "starting batcher")
@@ -118,7 +118,7 @@
     (for ([(grouping agg) (in-hash batch)])
       (match-define (list visitors sessions visits) agg)
       (query-exec conn UPSERT-BATCH-QUERY
-                  (date->sql-date (grouping-date grouping))
+                  (->sql-date (grouping-date grouping))
                   (grouping-host grouping)
                   (grouping-path grouping)
                   (or (grouping-referrer-host grouping) "")
@@ -156,14 +156,18 @@ SQL
 
 
 (module+ test
-  (require rackunit
+  (require net/url
+           rackunit
            rackunit/text-ui
            "migrator.rkt")
 
   (define-system test
-    [database (make-database #:database "nemea_tests"
-                             #:username "nemea"
-                             #:password "nemea")]
+    [database (make-database-factory
+               (lambda _
+                 (postgresql-connect
+                  #:database "nemea_tests"
+                  #:user     "nemea"
+                  #:password "nemea")))]
     [batcher (database geolocator) (make-batcher)]
     [geolocator make-geolocator]
     [migrator (database) make-migrator])
@@ -196,7 +200,7 @@ SQL
       (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/a") #f #f))
       (enqueue (system-get test-system 'batcher) (page-visit "a" "b" (string->url "http://example.com/b") #f #f))
       (!> (system-get test-system 'batcher) 'stop)
-      (sync (system-idle-evt))
+      (sync (system-get test-system 'batcher))
 
       (check-eq?
        (with-database-connection [conn (system-get test-system 'database)]

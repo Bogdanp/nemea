@@ -3,18 +3,19 @@
 (require (for-syntax racket)
          component
          db
+         koyo/database
          racket/contract
          racket/file
          racket/list
          racket/match
          racket/path
          racket/runtime-path
-         racket/string
-         "database.rkt")
+         racket/string)
 
-(provide (contract-out
-          [struct migrator ((database database?))]
-          [make-migrator (-> database? migrator?)]))
+(provide
+ (contract-out
+  [struct migrator ((database database?))]
+  [make-migrator (-> database? migrator?)]))
 
 (define-logger migrator)
 

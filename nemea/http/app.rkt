@@ -2,6 +2,7 @@
 
 (require (for-syntax racket/base)
          component
+         koyo/database
          koyo/mime
          racket/contract
          racket/runtime-path
@@ -14,7 +15,6 @@
          web-server/servlet-dispatch
          "../components/batcher.rkt"
          "../components/current-visitors.rkt"
-         "../components/database.rkt"
          "../components/migrator.rkt"
          "../components/reporter.rkt"
          "middleware.rkt"

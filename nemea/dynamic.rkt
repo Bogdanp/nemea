@@ -1,11 +1,12 @@
 #lang racket/base
 
 (require component
+         (only-in db postgresql-connect)
+         koyo/database
          koyo/logging
          koyo/server
          "components/batcher.rkt"
          "components/current-visitors.rkt"
-         "components/database.rkt"
          "components/geolocator.rkt"
          "components/migrator.rkt"
          "components/reporter.rkt"
@@ -21,13 +22,16 @@
   [batcher (database geolocator) (make-batcher #:channel-size config:batcher-channel-size
                                                #:timeout config:batcher-timeout)]
   [current-visitors make-current-visitors]
-  [database (make-database #:server config:db-host
-                           #:port config:db-port
-                           #:username config:db-username
-                           #:password config:db-password
-                           #:database config:db-name
-                           #:max-connections config:db-max-connections
-                           #:max-idle-connections config:db-max-idle-connections)]
+  [database (make-database-factory
+             #:max-connections config:db-max-connections
+             #:max-idle-connections config:db-max-idle-connections
+             (lambda _
+               (postgresql-connect
+                #:database config:db-name
+                #:user     config:db-username
+                #:password config:db-password
+                #:server   config:db-host
+                #:port     config:db-port)))]
   [geolocator make-geolocator]
   [migrator (database) make-migrator]
   [reporter (database) make-reporter]
