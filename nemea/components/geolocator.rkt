@@ -1,17 +1,16 @@
 #lang racket/base
 
-(require component
+(require (for-syntax racket/base)
+         component
          geoip
-         (for-syntax racket/base)
-         racket/contract/base
-         racket/function
+         racket/contract
          racket/runtime-path
          threading)
 
-(provide (contract-out
-          [struct geolocator ([db (or/c false/c geoip?)])]
-          [make-geolocator (-> geolocator?)]
-          [geolocator-country-code (-> geolocator? string? (or/c false/c string?))]))
+(provide
+ make-geolocator
+ geolocator?
+ geolocator-country-code)
 
 (define-runtime-path DB-PATH
   (build-path 'up 'up "assets" "data" "GeoLite2-Country.mmdb"))
@@ -27,14 +26,30 @@
 (define (make-geolocator)
   (geolocator #f))
 
-(define (geolocator-country-code geolocator ip)
+(define/contract (geolocator-country-code geolocator ip)
+  (-> geolocator? string? (or/c false/c string?))
   (and~> (geoip-lookup (geolocator-db geolocator) ip)
          (hash-ref "country" #f)
          (hash-ref "iso_code" #f)))
 
 (module+ test
-  (require rackunit)
+  (require rackunit
+           rackunit/text-ui)
 
   (define geolocator (component-start (make-geolocator)))
-  (check-false (geolocator-country-code geolocator "127.0.0.1"))
-  (check-equal? (geolocator-country-code geolocator "188.24.7.80") "RO"))
+
+  (run-tests
+   (test-suite
+    "geolocator"
+
+    (test-suite
+     "geolocator-country-code"
+
+     (test-false
+      "#f when given a private IP"
+      (geolocator-country-code geolocator "127.0.0.1"))
+
+     (test-equal?
+      "returns the country code when given a public IP"
+      (geolocator-country-code geolocator "188.24.7.80")
+      "RO")))))
