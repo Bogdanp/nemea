@@ -1,10 +1,9 @@
 #lang racket/base
 
-(require gregor
+(require (for-syntax racket/base)
+         gregor
          koyo/config
          net/url
-         (for-syntax racket)
-         racket/list
          racket/port
          racket/runtime-path
          racket/set
@@ -53,7 +52,7 @@
   (string->number batcher-channel-size))
 
 (define-option batcher-timeout
-  #:default "15"
+  #:default "5"
   (string->number batcher-timeout))
 
 (define-option log-level
