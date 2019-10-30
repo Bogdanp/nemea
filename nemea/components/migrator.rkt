@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require (for-syntax racket)
+(require (for-syntax racket/base)
          component
          db
          koyo/database
@@ -13,21 +13,21 @@
          racket/string)
 
 (provide
- (contract-out
-  [struct migrator ((database database?))]
-  [make-migrator (-> database? migrator?)]))
+ make-migrator
+ migrator?)
 
 (define-logger migrator)
 
 (struct migrator (database)
   #:methods gen:component
   [(define (component-start migrator)
-     (migrate! migrator)
-     migrator)
+     (begin0 migrator
+       (migrate! migrator)))
 
-   (define (component-stop migrator) migrator)])
+   (define (component-stop _)
+     (migrator #f))])
 
-(define (make-migrator database)
+(define/contract (make-migrator database)
   (-> database? migrator?)
   (migrator database))
 
@@ -44,11 +44,6 @@
      (string-ci<? (path->string a)
                   (path->string b)))))
 
-(define (migrate-one! conn ref migration-path)
-  (log-migrator-info "performing migration ~s" ref)
-  (query-exec conn (file->string migration-path))
-  (query-exec conn "insert into migrations values($1)" ref))
-
 (define (migrate! migrator)
   (with-database-connection [conn (migrator-database migrator)]
     (query-exec conn "create table if not exists migrations(ref text not null unique)")
@@ -59,10 +54,10 @@
     (for ([migration-path migration-paths])
       (define ref (path->string (last (explode-path migration-path))))
       (when (string-ci<? latest-ref ref)
-        (call-with-transaction
-          conn
-          (lambda ()
-            (migrate-one! conn ref migration-path))
-          #:isolation 'serializable)))
+        (with-database-transaction [conn conn]
+          #:isolation 'serializable
+          (log-migrator-info "performing migration ~s" ref)
+          (query-exec conn (file->string migration-path))
+          (query-exec conn "insert into migrations values($1)" ref))))
 
     (log-migrator-info "migrations complete")))
