@@ -14,7 +14,7 @@
 (define-option hostname
   #:default "127.0.0.1")
 
-(define-option host
+(define-option listen-ip
   #:default "127.0.0.1")
 
 (define-option port

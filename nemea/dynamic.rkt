@@ -38,7 +38,7 @@
   [reporter (database) make-reporter]
   [server (app) (compose1
                  (make-server-factory
-                  #:host config:host
+                  #:host config:listen-ip
                   #:port config:port)
                  app-dispatcher)])
 
