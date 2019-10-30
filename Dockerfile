@@ -20,6 +20,7 @@ FROM jackfirth/racket:7.4-full AS distribution
 ADD . /opt/nemea
 WORKDIR /opt/nemea
 COPY --from=asset_compression /opt/nemea/static /opt/nemea/static
+RUN find . -type d -name compiled -exec rm -rf \{\} \;
 RUN raco pkg install --auto nemea/ \
   && raco setup -D --tidy --check-pkg-deps --unused-pkg-deps --pkgs nemea \
   && raco koyo dist
