@@ -12,5 +12,4 @@
                "sql"
                "threading-lib"
                "web-server-lib"))
-(define build-deps '("at-exp-lib"
-                     "rackunit-lib"))
+(define build-deps '("rackunit-lib"))

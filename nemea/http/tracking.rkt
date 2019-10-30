@@ -11,7 +11,6 @@
          "../components/batcher.rkt"
          "../components/current-visitors.rkt"
          "../components/page-visit.rkt"
-         "common.rkt"
          "middleware.rkt")
 
 (provide

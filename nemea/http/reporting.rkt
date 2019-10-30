@@ -9,7 +9,6 @@
          web-server/http
          "../components/current-visitors.rkt"
          "../components/reporter.rkt"
-         "common.rkt"
          "middleware.rkt")
 
 (provide
@@ -47,9 +46,9 @@
   (define start-date (string->date (bindings-ref bindings 'lo)))
   (define end-date (string->date (bindings-ref bindings 'hi)))
   (cond
-    [(not start-date) (response/bad-request "start date missing")]
-    [(not end-date) (response/bad-request "end date missing")]
-    [(date<=? end-date start-date) (response/bad-request "start date must be less than end date")]
+    [(not start-date) (bad-request "start date missing")]
+    [(not end-date) (bad-request "end date missing")]
+    [(date<=? end-date start-date) (bad-request "start date must be less than end date")]
 
     [else
      (response/json (make-daily-report reporter start-date end-date))]))

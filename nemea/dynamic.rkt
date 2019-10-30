@@ -45,11 +45,12 @@
 (define (start)
   (define stop-logger
     (start-logger
-     #:levels `((app      . ,config:log-level)
-                (batcher  . ,config:log-level)
-                (database . ,config:log-level)
-                (migrator . ,config:log-level)
-                (system   . ,config:log-level))))
+     #:levels `((app        . ,config:log-level)
+                (batcher    . ,config:log-level)
+                (database   . ,config:log-level)
+                (http-error . ,config:log-level)
+                (migrator   . ,config:log-level)
+                (system     . ,config:log-level))))
 
   (system-start prod-system)
 
