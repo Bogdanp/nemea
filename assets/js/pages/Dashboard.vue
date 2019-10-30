@@ -40,13 +40,13 @@
       </card>
     </div>
 
+    <div class="reports reports--wide">
+      <live-locations :locations="liveLocations"></live-locations>
+    </div>
+
     <div class="reports">
       <top-pages :breakdown="report['pages-breakdown']"></top-pages>
       <top-referrers :breakdown="report['referrers-breakdown']"></top-referrers>
-    </div>
-
-    <div class="reports reports--wide">
-      <live-locations :locations="liveLocations"></live-locations>
     </div>
   </div>
 </template>

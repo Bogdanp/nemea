@@ -27,9 +27,11 @@
          (send-event 'locations (lambda ()
                                   (write-json
                                    (remove-duplicates
-                                    (for*/list ([(_ data) (in-hash visitors)]
-                                                [location (in-value (cdr data))])
-                                      (url->string location))))))
+                                    (let ([sorted-visitors (sort (hash->list visitors) > #:key (compose1 car cdr))])
+                                      (for*/list ([pair (in-list sorted-visitors)]
+                                                  [data (in-value (cdr pair))]
+                                                  [location (in-value (cdr data))])
+                                        (url->string location)))))))
          (loop))))))
 
 (define (send-event name data-or-writer)

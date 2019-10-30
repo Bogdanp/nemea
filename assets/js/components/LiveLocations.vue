@@ -3,7 +3,7 @@
     <table class="table">
       <thead>
         <tr>
-          <th>Location</th>
+          <th>Live Hits</th>
         </tr>
       </thead>
       <tbody>
