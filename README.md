@@ -38,6 +38,13 @@ Set up the databases:
     $ echo "create extension if not exists hll;" | psql -Unemea -dnemea
     $ echo "create extension if not exists hll;" | psql -Unemea -dnemea_tests
 
+Download Maxmind's geolocation database:
+
+    $ curl -ls https://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.tar.gz | tar -xz '*.mmdb' \
+        && mv GeoLite2-Country_*/GeoLite2-Country.mmdb assets/data/GeoLite2-Country.mmdb \
+        && rm -r GeoLite2-Country_*
+
+
 ### Running the development server
 
     $ raco chief start
