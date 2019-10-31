@@ -1,0 +1,8 @@
+FROM postgres:11
+
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends postgresql-$PG_MAJOR-hll \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /docker-entrypoint-initdb.d
+COPY ./initdb-hll.sql /docker-entrypoint-initdb.d/

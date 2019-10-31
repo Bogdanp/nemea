@@ -4,6 +4,11 @@ Take control of your website analytics!
 
 ![screenshot](assets/img/screenshot.png)
 
+## Usage
+
+See the `example` directory for an example of how you might run nemea
+using `docker` and `docker-compose`.
+
 ## Developing
 
 ### Requirements

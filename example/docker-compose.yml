@@ -1,0 +1,28 @@
+version: "3.7"
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    environment:
+      POSTGRES_DB: nemea
+      POSTGRES_USER: nemea
+      POSTGRES_PASSWORD: nemea
+    volumes:
+      - nemea-pg-data:/var/lib/postgresql/data
+
+  nemea:
+    image: bogdanp/nemea:0.0.15
+    environment:
+      NEMEA_LISTEN_IP: 0.0.0.0
+      NEMEA_PORT: 8000
+      NEMEA_DATABASE_URL: postgres://nemea:nemea@postgres/nemea
+    depends_on:
+      - postgres
+    links:
+      - postgres
+    ports:
+      - 8111:8000
+
+volumes:
+  nemea-pg-data:
