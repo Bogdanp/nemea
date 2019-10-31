@@ -54,7 +54,7 @@
     (for ([migration-path migration-paths])
       (define ref (path->string (last (explode-path migration-path))))
       (when (string-ci<? latest-ref ref)
-        (with-database-transaction [conn conn]
+        (with-database-transaction [conn (migrator-database migrator)]
           #:isolation 'serializable
           (log-migrator-info "performing migration ~s" ref)
           (query-exec conn (file->string migration-path))
