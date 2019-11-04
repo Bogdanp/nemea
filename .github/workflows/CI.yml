@@ -1,0 +1,14 @@
+on: [push, pull_request]
+name: CI
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: Bogdanp/setup-racket@v0.1
+        with:
+          architecture: x64
+          distribution: full
+          variant: regular
+          version: 7.4
+      - run: raco test nemea/
