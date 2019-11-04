@@ -11,4 +11,14 @@ jobs:
           distribution: full
           variant: regular
           version: 7.4
+      - run: raco pkg install --batch --auto nemea/
       - run: raco test nemea/
+    services:
+      postgres:
+        image: postgres:12
+        ports:
+          - 5432/tcp
+        env:
+          POSTGRES_DB: nemea
+          POSTGRES_USER: nemea
+          POSTGRES_PASSWORD: nemea
