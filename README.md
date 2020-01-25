@@ -28,21 +28,23 @@ Install all the prerequisites:
 
 Set up the databases:
 
-    $ psql <<-SQL
+    $ psql -dpostgres <<-SQL
     create user nemea with password 'nemea' login;
     create database nemea;
     grant all privileges on database nemea to nemea;
     create database nemea_tests;
     grant all privileges on database nemea_tests to nemea;
     SQL
-    $ echo "create extension if not exists hll;" | psql -Unemea -dnemea
-    $ echo "create extension if not exists hll;" | psql -Unemea -dnemea_tests
+    $ echo "create extension if not exists hll;" | psql -dnemea
+    $ echo "create extension if not exists hll;" | psql -dnemea_tests
 
 Download Maxmind's geolocation database:
 
     $ curl -ls https://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.tar.gz | tar -xz '*.mmdb' \
         && mv GeoLite2-Country_*/GeoLite2-Country.mmdb assets/data/GeoLite2-Country.mmdb \
         && rm -r GeoLite2-Country_*
+
+*NB: As of Jan. 2020, you need to create an account to get access to MaxMind's GeoLite databases.*
 
 
 ### Running the development server
