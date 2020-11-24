@@ -22,6 +22,7 @@ You'll also need a running [PostgreSQL] instance.
 
 Install all the prerequisites:
 
+    $ raco pkg install chief
     $ raco pkg install nemea/
     $ npm install
     $ cp .env.default .env
