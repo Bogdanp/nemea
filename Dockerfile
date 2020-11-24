@@ -1,4 +1,4 @@
-FROM node:10.6 AS assets
+FROM node:12 AS assets
 
 ADD . /opt/nemea
 WORKDIR /opt/nemea
@@ -15,13 +15,17 @@ RUN pip install -U pip \
   && pip install whitenoise[brotli] \
   && python -m whitenoise.compress static
 
-FROM jackfirth/racket:7.4-full AS distribution
+FROM jackfirth/racket:7.9-cs-full AS distribution
 
 ADD . /opt/nemea
 WORKDIR /opt/nemea
 COPY --from=asset_compression /opt/nemea/static /opt/nemea/static
-RUN find . -type d -name compiled -exec rm -rf \{\} \;
-RUN raco pkg install --auto nemea/ \
+RUN find . -type d -name compiled -exec rm -rf \{\} \; || true
+RUN raco pkg config --set catalogs \
+  https://download.racket-lang.org/releases/7.9/catalog/ \
+  https://racksnaps.defn.io/built-snapshots/2020/11/24/catalog/ \
+  https://racksnaps.defn.io/snapshots/2020/11/24/catalog/
+RUN raco pkg install -D --auto nemea/ \
   && raco setup -D --tidy --check-pkg-deps --unused-pkg-deps --pkgs nemea \
   && raco koyo dist
 
