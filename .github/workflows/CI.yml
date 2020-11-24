@@ -5,13 +5,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: Bogdanp/setup-racket@v0.1
+      - uses: Bogdanp/setup-racket@v0.10
         with:
           architecture: x64
           distribution: full
-          variant: regular
-          version: 7.4
-      - run: raco pkg install --batch --auto nemea/
+          variant: CS
+          version: 7.9
+      - run: raco pkg install -D --batch --auto nemea/
       - run: raco test nemea/
     services:
       postgres:
