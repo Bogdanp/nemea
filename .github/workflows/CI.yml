@@ -5,20 +5,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: Bogdanp/setup-racket@v0.10
+      - uses: Bogdanp/setup-racket@v1.3
         with:
           architecture: x64
           distribution: full
           variant: CS
-          version: 7.9
+          version: 8.1
+      - run: |
+          curl -L "$MAXMIND_DB_URL" | tar xvz
+          mv GeoLite2*/GeoLite2-Country.mmdb assets/data/GeoLite2-Country.mmdb
+        env:
+          MAXMIND_DB_URL: ${{ secrets.MAXMIND_DB_URL }}
       - run: raco pkg install -D --batch --auto nemea/
       - run: raco test nemea/
     services:
       postgres:
-        image: postgres:12
+        image: jasei/postgres-hll:13.2
         ports:
-          - 5432/tcp
+          - 5432:5432
         env:
-          POSTGRES_DB: nemea
+          POSTGRES_DB: nemea_tests
           POSTGRES_USER: nemea
           POSTGRES_PASSWORD: nemea
